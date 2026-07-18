@@ -4,6 +4,8 @@
 
 https://ramp-hackathon-theta.vercel.app/
 
+Press "Shift + D" to activate admin panel, allowing you to skip puzzles, scenes, etc. 
+
 ## Motivation, intention & differentiation
 
 Citywide is a fun, interactive, browser-based escape room that disguises real SWE and quant interview questions (NeetCode-style array/logic puzzles, Green Book–style probability and stats) as a cinematic 12-minute story. An AI Game Master, MIRA, watches your whole session and gives curated guidance when asked, while a fully deterministic engine decides how much to reveal.
