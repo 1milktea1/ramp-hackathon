@@ -14,7 +14,7 @@ import type { CampaignId, SceneDefinition } from "./types";
  * Hint digit per bank ID, transcribed from the plan.md §3 tables.
  *
  * Two answers are not naturally numeric and use the stated conventions:
- *   sf_backspace_compare — digit is the number of Backspace presses used (1)
+ *   sf_unique_path_count — full answer 28; hint digit is the ones place (8)
  *   ny_monty_reveal      — SWITCH = 1, STAY = 0
  */
 export const HINT_DIGITS: Record<string, number> = {
@@ -23,7 +23,7 @@ export const HINT_DIGITS: Record<string, number> = {
   sf_missing_number: 3,
   sf_contains_dup: 1,
   sf_best_time_stock: 5,
-  sf_backspace_compare: 1,
+  sf_unique_path_count: 8,
   sf_valid_parens: 1,
   sf_binary_search: 3,
   sf_max_subarray: 6,
@@ -78,7 +78,7 @@ export function revealedDigits(
   );
 }
 
-/** The finale code, computed — never hardcoded. SF → "577", NYC tray → "467". */
+/** The finale code, computed — never hardcoded. SF → "547", NYC tray → "467". */
 export function finalCode(scenes: SceneDefinition[]): string {
   return scenes.map((s) => String(stageHint(s))).join("");
 }

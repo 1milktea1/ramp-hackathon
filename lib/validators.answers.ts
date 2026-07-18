@@ -29,7 +29,7 @@ numeric("sf_two_sum", 1);
 numeric("sf_missing_number", 3);
 numeric("sf_contains_dup", 1);
 numeric("sf_best_time_stock", 5);
-word("sf_backspace_compare", "crsor");
+numeric("sf_unique_path_count", 28);
 numeric("sf_valid_parens", 1);
 numeric("sf_binary_search", 3);
 numeric("sf_max_subarray", 6);
@@ -53,5 +53,5 @@ registerValidator("ny-finale-market", (input) =>
 );
 
 // --- Finale codes (derived) ---------------------------------
-word("sf-finale-code", finalCode(SAN_FRANCISCO.scenes)); // → "577"
+word("sf-finale-code", finalCode(SAN_FRANCISCO.scenes)); // → "547"
 word("ny-finale-code", finalCode(NEW_YORK.scenes)); // → "467"

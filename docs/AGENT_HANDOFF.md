@@ -43,7 +43,8 @@ Work on **`erica`**. Prefer additive files. Push only when asked (owner preferen
 - Stages 1–2: three terminals (left/center/right) → `PuzzleModal` + optional `PuzzleAid`
 - **NYC stage 3:** single center hotspot **Exchange Desk** → opens `MarketMakerFinale` (left/right empty)
 - SF last stage still uses digit-code / `FinaleRoom` path
-- Stage hint digits → tray code via `lib/progress.ts` (`finalCode`); SF unlock `577`; NYC tray still computes `467` with market hint digit `7`
+- Stage hint digits → tray code via `lib/progress.ts` (`finalCode`); SF unlock `547` (unique-path ones digit 8); NYC tray still computes `467` with market hint digit `7`
+- Scene 2 (both cities): `interaction: "camera"` via MediaPipe (`CameraPuzzle`, `lib/mediapipe-hands.ts`); Space-hold 2s fallback
 
 ### Validators
 - Registry: `validate(key, input)` in `lib/validators.ts`

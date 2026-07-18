@@ -5,16 +5,28 @@ import type { PuzzleDefinition } from "@/lib/types";
 import { validate } from "@/lib/validators";
 import { emit } from "@/lib/events";
 import { PuzzleAid } from "./PuzzleAid";
+import { CameraPuzzle } from "./CameraPuzzle";
 
 /**
- * The terminal that carries 15 of the 18 questions (plan.md §3 — nearly every
- * question is `interaction: "numeric"`). Visual aids render above the input as
- * an optional prop, so a question still plays as text if its aid is unbuilt.
- *
- * While this modal is open it OWNS the keyboard: SceneShell suspends panorama
- * arrow-key rotation, otherwise typing into a puzzle would spin the room.
+ * Routes to CameraPuzzle for Scene 2 biometrics; otherwise the text/numeric terminal.
+ * While open it OWNS the keyboard: SceneShell suspends panorama arrow keys.
  */
 export function PuzzleModal({
+  puzzle,
+  onSolved,
+  onClose,
+}: {
+  puzzle: PuzzleDefinition;
+  onSolved: (puzzleId: string) => void;
+  onClose: () => void;
+}) {
+  if (puzzle.interaction === "camera") {
+    return <CameraPuzzle puzzle={puzzle} onSolved={onSolved} onClose={onClose} />;
+  }
+  return <TerminalPuzzle puzzle={puzzle} onSolved={onSolved} onClose={onClose} />;
+}
+
+function TerminalPuzzle({
   puzzle,
   onSolved,
   onClose,
