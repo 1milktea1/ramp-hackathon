@@ -10,6 +10,7 @@
 import { registerValidator, toNumber, normalizeString } from "./validators";
 import { SAN_FRANCISCO, NEW_YORK } from "./campaigns";
 import { finalCode } from "./progress";
+import { checkGuess, getSession } from "./market-game";
 
 /** Register a puzzle whose answer is a single number. */
 function numeric(key: string, expected: number): void {
@@ -45,6 +46,11 @@ word("ny_monty_reveal", "SWITCH");
 numeric("ny_locker_doors", 4);
 numeric("ny_bayes_coin", 50);
 numeric("ny_weighted_ev", 3);
+
+// NYC quant finale: the market-maker dice game. The player's final guess is
+// checked against the active session's hidden roll (deterministic engine, not
+// MIRA). See lib/market-game.ts + components/puzzles/MarketMakerPuzzle.tsx.
+registerValidator("ny-finale-market", (input) => checkGuess(getSession(), input));
 
 // --- Finale codes (derived) ---------------------------------
 word("sf-finale-code", finalCode(SAN_FRANCISCO.scenes)); // → "577"
