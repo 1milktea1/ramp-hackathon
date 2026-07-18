@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CampaignDefinition } from "@/lib/types";
 import { finalCode, finaleValidatorKey, stageHint } from "@/lib/progress";
+import { finaleBackground } from "@/lib/campaigns";
 import { validate } from "@/lib/validators";
 import { emit } from "@/lib/events";
 
@@ -51,8 +52,26 @@ export function FinaleRoom({
   }
 
   return (
-    <div className="grid flex-1 place-items-center p-6" style={{ background: "var(--ink)" }}>
-      <div className="w-full max-w-lg">
+    <div
+      className="relative grid flex-1 place-items-center overflow-hidden p-6"
+      style={{ background: "var(--ink)" }}
+    >
+      {/* Room art, dimmed hard so the code entry stays the focus. */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: `url(${finaleBackground(campaign.id)})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 0.45,
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(ellipse at center, rgba(11,14,20,0.8) 30%, rgba(11,14,20,0.95) 100%)" }}
+      />
+
+      <div className="relative z-10 w-full max-w-lg">
         <p className="text-[9px] tracking-[0.3em]" style={{ color: "var(--accent)" }}>
           {campaign.id === "san-francisco-swe" ? "BAY CONTROL CENTER" : "LOWER MANHATTAN EXCHANGE"}
         </p>

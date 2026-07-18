@@ -362,8 +362,8 @@ export const SAN_FRANCISCO: CampaignDefinition = {
   },
   scenes: [
     toScene("sf-1", "SoMa Transit Stop", "SoMa · San Francisco", "/bg/sf-1.png", SF_STAGE_1, "sf-2"),
-    toScene("sf-2", "Cursor Development Floor", "Mission · San Francisco", "/bg/sf-2.png", SF_STAGE_2, "sf-3"),
-    toScene("sf-3", "OpenAI Mission Bay Node", "Mission Bay · San Francisco", "/bg/sf-3.png", SF_STAGE_3),
+    toScene("sf-2", "Cursor Development Floor", "Mission · San Francisco", "/bg/sf-2.jpeg", SF_STAGE_2, "sf-3"),
+    toScene("sf-3", "OpenAI Mission Bay Node", "Mission Bay · San Francisco", "/bg/sf-3.jpeg", SF_STAGE_3),
   ],
 };
 
@@ -381,9 +381,9 @@ export const NEW_YORK: CampaignDefinition = {
     physical: 0.15,
   },
   scenes: [
-    toScene("ny-1", "23rd Street Subway", "Flatiron · Manhattan", "/bg/ny-1.png", NY_STAGE_1, "ny-2"),
-    toScene("ny-2", "Ramp Headquarters", "West 23rd St · Manhattan", "/bg/ny-2.png", NY_STAGE_2, "ny-3"),
-    toScene("ny-3", "Midtown Market Data Floor", "Midtown · Manhattan", "/bg/ny-3.png", NY_STAGE_3),
+    toScene("ny-1", "23rd Street Subway", "Flatiron · Manhattan", "/bg/ny-1.jpeg", NY_STAGE_1, "ny-2"),
+    toScene("ny-2", "Ramp Headquarters", "West 23rd St · Manhattan", "/bg/ny-2.jpeg", NY_STAGE_2, "ny-3"),
+    toScene("ny-3", "Midtown Market Data Floor", "Midtown · Manhattan", "/bg/ny-3.jpeg", NY_STAGE_3),
   ],
 };
 
@@ -410,6 +410,16 @@ export function puzzleForView(
 
 /** Ordered [left, center, right] views — the Q1/Q2/Q3 progression. */
 export const VIEW_ORDER = VIEWS;
+
+/**
+ * Art for the finale room. CampaignDefinition is frozen and has no field for
+ * it, so the path is derived by convention rather than stored.
+ */
+export function finaleBackground(campaignId: CampaignId): string {
+  return campaignId === "san-francisco-swe"
+    ? "/bg/sf-finale.jpeg"
+    : "/bg/ny-finale.jpeg";
+}
 
 // --- Visual aids --------------------------------------------
 //
