@@ -99,15 +99,15 @@ Non-question elements are unchanged and sit **alongside**, not instead of, the 3
 | 1 | Q3 | **E1** | `sf_contains_dup` | `array` / `numeric` | Board `[4,1,9,6,1]` → enter the duplicated ID | `1` | `1` |
 | **1** | | | | | **Stage 1 Hint** = ones digit of (1+3+1) | | **`5`** |
 | 2 | Q1 | **E1** | `sf_best_time_stock` | `math` / `numeric` | Ramp ticker `[7,1,5,3,6]` → enter the max possible gain | `5` | `5` |
-| 2 | Q2 | **E2** | `sf_backspace_compare` | `logic` / `keyboard_sequence` | Buffer `cu#rsor` (`#` = live Backspace press) → retype it, resolving to the clean value | `crsor` | `1` (one Backspace used) |
+| 2 | Q2 | **E2** | `sf_unique_path_count` | `dynamic_programming` / `grid_traversal` | Robot moves through an `m x n` grid, only moving right or down → compute the number of unique paths from top-left to bottom-right | `28` | `8` |
 | 2 | Q3 | **E2** | `sf_valid_parens` | `logic` / `numeric` | Log string `( ( ) ( ) )` → enter `1` if balanced, else the 0-based index of the first break | `1` | `1` |
-| **2** | | | | | **Stage 2 Hint** = ones digit of (5+1+1) | | **`7`** |
+| **2** | | | | | **Stage 2 Hint** = ones digit of (5+8+1=14) | | **`4`** |
 | 3 | Q1 | **E2** | `sf_binary_search` | `logic` / `numeric` | Sorted list `[3,9,14,22,31,40]` → enter the 0-based index of `22` | `3` | `3` |
 | 3 | Q2 | **M1** | `sf_max_subarray` | `array` / `numeric` | Load deltas `[-2,4,-1,3,-2,2]` → enter the largest contiguous sum | `6` | `6` |
 | 3 | Q3 | **M1** | `sf_product_except_self` | `array` / `numeric` | Array `[2,3,4]` → enter the value replacing index 1 (product of the other two) | `8` | `8` |
 | **3** | | | | | **Stage 3 Hint** = ones digit of (3+6+8=17) | | **`7`** |
 
-**Final SF code:** Stage1 ‖ Stage2 ‖ Stage3 = `5` `7` `7` → **`577`**
+**Final SF code:** Stage1 ‖ Stage2 ‖ Stage3 = `5` `4` `7` → **`547`**
 
 Camera open-palm verification gates the door into the Bay Control Center room after Stage 3's hint (`7`) unlocks; inside, the player enters `577` (fallback: type it directly if the terminal template is used instead of a keypad).
 
@@ -120,15 +120,15 @@ Camera open-palm verification gates the door into the Bay Control Center room af
 | 1 | Q3 | **E1** | `ny_handshakes` | `math` / `numeric` | 6 traders each shake every other trader's hand once → enter total handshakes | `15` | `5` |
 | **1** | | | | | **Stage 1 Hint** = ones digit of (6+3+5) | | **`4`** |
 | 2 | Q1 | **E1** | `ny_coin_flip_ev` | `probability` / `numeric` | Fair coin flipped until HEAD → enter expected number of flips | `2` | `2` |
-| 2 | Q2 | **E2** | `ny_balls_no_replace` | `probability` / `numeric` | Bin `5 blue, 3 red`, draw 2 without replacement → enter numerator of P(both red) over denominator 28 | `6` | `6` |
+| 2 | Q2 | **E2** | `ny_balls_no_replace` | `probability` / `numeric` | Bin `5 blue, 3 red`, draw 2 without replacement → enter numerator of P(both red) over denominator 28 | `3` | `3` |
 | 2 | Q3 | **E2** | `ny_monty_reveal` | `logic` / `object_selection` | 3 doors, one wrong door opens → `SWITCH` or `STAY`? | `SWITCH` | `1` (SWITCH=1, STAY=0) |
-| **2** | | | | | **Stage 2 Hint** = ones digit of (2+6+1) | | **`9`** |
+| **2** | | | | | **Stage 2 Hint** = ones digit of (2+3+1) | | **`6`** |
 | 3 | Q1 | **E2** | `ny_locker_doors` | `logic` / `numeric` | 20 doors, pass `k` toggles multiples of `k` for `k=1..20` → enter how many end open | `4` | `4` |
 | 3 | Q2 | **M1** | `ny_bayes_coin` | `probability` / `numeric` | Vault: 2 fair coins + 1 two-headed; draw random coin, flip HEADS → enter % chance it's the two-headed coin | `50` | `0` |
 | 3 | Q3 | **M1** | `ny_weighted_ev` | `probability` / `numeric` | Trade returns `+$12` (25%), `+$2` (50%), `−$4` (25%) → enter the expected value | `3` | `3` |
 | **3** | | | | | **Stage 3 Hint** = ones digit of (4+0+3) | | **`7`** |
 
-**Final NYC code:** Stage1 ‖ Stage2 ‖ Stage3 = `4` `9` `7` → **`497`**
+**Final NYC code:** Stage1 ‖ Stage2 ‖ Stage3 = `4` `6` `7` → **`467`**
 
 MetroCard-speed swipe (Stage 1, non-question) and the TimedKey sweep (Stage 3 finale, or type-`497` fallback) are unchanged in mechanic — only the source of the digits changed.
 
