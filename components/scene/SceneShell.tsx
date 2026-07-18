@@ -11,6 +11,7 @@ import { NavigationArrows } from "./NavigationArrows";
 import { TopBar } from "../system/TopBar";
 import { DigitTray } from "../system/DigitTray";
 import { MiraCaption } from "../game-master/MiraCaption";
+import { ConvictionMeter } from "../game-master/ConvictionMeter";
 import { PuzzleModal } from "../puzzles/PuzzleModal";
 import { FinalePanel } from "../campaign/FinalePanel";
 
@@ -167,12 +168,11 @@ export function SceneShell({
               Enter final code ▶
             </button>
           )}
-          <button
-            onClick={() => emit("hint_request", { sceneId: scene.id })}
-            className="px-btn px-3 py-2 text-[10px]"
-          >
-            Request hint
-          </button>
+          <ConvictionMeter
+            key={scene.id}
+            sceneId={scene.id}
+            onHint={(message) => setCaption(message)}
+          />
         </div>
       </footer>
     </div>
