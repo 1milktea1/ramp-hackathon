@@ -4,6 +4,14 @@ import type { PuzzleDefinition, SceneDefinition, ViewDirection } from "@/lib/typ
 import { VIEW_ORDER, puzzleForView } from "@/lib/campaigns";
 import { SceneBackdrop } from "./SceneBackdrop";
 
+// Rooms are ultrawide 3:1 art showing three connected views; each third is one
+// view (docs/asset-prompts.md).
+const CROP: Record<ViewDirection, string> = {
+  left: "0% 50%",
+  center: "50% 50%",
+  right: "100% 50%",
+};
+
 /**
  * Three coordinated views on a sliding track. Q1 lives on the left wall,
  * Q2 on the center, Q3 on the right — so rotating IS the progression.
@@ -38,15 +46,28 @@ export function PanoramaView({
               className="px-scan relative grid w-1/3 shrink-0 place-items-center"
               aria-hidden={v !== view}
             >
-              {/* Rooms are drawn in CSS. If a bitmap ever lands in
-                  scene.backgrounds it layers on top without a code change. */}
+              {/* CSS room is the fallback layer. */}
               <SceneBackdrop sceneId={scene.id} view={v} />
+
+              {/* Generated art layers over it. A missing file renders nothing
+                  rather than a broken image, so this is safe to leave wired
+                  before the assets exist. See docs/asset-prompts.md. */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  backgroundImage: `url(${scene.backgrounds[v]})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: CROP[v],
+                }}
+              />
 
               {puzzle && hotspot && (
                 <button
                   onClick={() => onOpenPuzzle(puzzle)}
                   tabIndex={v === view ? 0 : -1}
-                  className="group grid place-items-center gap-2 border-2 px-6 py-5"
+                  // relative/z-10 is load-bearing: the backdrop is absolutely
+                  // positioned, so a static button would paint underneath it.
+                  className="group relative z-10 grid place-items-center gap-2 border-2 px-6 py-5"
                   style={{
                     borderColor: solved ? "var(--lit)" : "var(--accent)",
                     borderStyle: solved ? "solid" : "dashed",
