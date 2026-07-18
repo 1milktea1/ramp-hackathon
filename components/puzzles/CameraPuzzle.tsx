@@ -17,9 +17,9 @@ import { detectHands, preloadHandLandmarker } from "@/lib/mediapipe-hands";
 import { emit } from "@/lib/events";
 import { validate } from "@/lib/validators";
 
-const HOLD_MS = 2500;
+const HOLD_MS = 2000;
 const SPACE_HOLD_MS = 2000;
-const WRONG_HOLD_MS = 2500;
+const WRONG_HOLD_MS = 2000;
 
 type LiveStatus = {
   confidence: number;
@@ -75,7 +75,9 @@ function gestureMatches(
 
 /**
  * Live MediaPipe hand panel (README § MediaPipe / visual answers).
- * Hold the target gesture ~2.5s to submit. Space-hold (2s) is the fallback.
+ * Hold the correct gesture ~2s to submit. Wrong gesture held ~2s shows
+ * Incorrect but keeps the panel open until the right gesture succeeds.
+ * Space-hold (2s) is the keyboard fallback.
  */
 export function CameraPuzzle({
   puzzle,
@@ -93,6 +95,8 @@ export function CameraPuzzle({
   const wrongSinceRef = useRef<number | null>(null);
   const spaceSinceRef = useRef<number | null>(null);
   const submittedRef = useRef(false);
+  /** Prevents re-firing Incorrect every frame while the same wrong gesture is held. */
+  const wrongSignaledRef = useRef(false);
 
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,35 +111,30 @@ export function CameraPuzzle({
   const [shake, setShake] = useState(false);
   const [verified, setVerified] = useState(false);
   const [incorrect, setIncorrect] = useState(false);
-  const incorrectTimerRef = useRef<number | null>(null);
 
-  function submitAnswer(answer: string) {
+  /** Only called for the correct answer — closes after verify. */
+  function submitCorrect(answer: string) {
     if (submittedRef.current) return;
     emit("answer_submit", { puzzleId: puzzle.id, answer });
+    if (!validate(puzzle.validatorKey, answer)) return;
 
-    if (validate(puzzle.validatorKey, answer)) {
-      submittedRef.current = true;
-      setIncorrect(false);
-      setVerified(true);
-      emit("puzzle_complete", { puzzleId: puzzle.id });
-      window.setTimeout(() => onSolved(puzzle.id), 450);
-      return;
-    }
+    submittedRef.current = true;
+    setIncorrect(false);
+    setVerified(true);
+    emit("puzzle_complete", { puzzleId: puzzle.id });
+    window.setTimeout(() => onSolved(puzzle.id), 450);
+  }
 
+  /** Wrong hold feedback only — never closes the panel. */
+  function signalIncorrect(answer: string) {
+    if (submittedRef.current || wrongSignaledRef.current) return;
+    wrongSignaledRef.current = true;
     emit("wrong_attempt", { puzzleId: puzzle.id, answer });
     setShake(true);
     setIncorrect(true);
     setHoldProgress(0);
     matchSinceRef.current = null;
-    wrongSinceRef.current = null;
-    if (incorrectTimerRef.current != null) {
-      window.clearTimeout(incorrectTimerRef.current);
-    }
     window.setTimeout(() => setShake(false), 320);
-    incorrectTimerRef.current = window.setTimeout(() => {
-      setIncorrect(false);
-      incorrectTimerRef.current = null;
-    }, 1600);
   }
 
   useEffect(() => {
@@ -183,7 +182,7 @@ export function CameraPuzzle({
       const sp = Math.min(1, (now - spaceSinceRef.current) / SPACE_HOLD_MS);
       setSpaceProgress(sp);
       if (sp >= 1) {
-        submitAnswer(target.answer);
+        submitCorrect(target.answer);
         return true;
       }
       return false;
@@ -224,18 +223,20 @@ export function CameraPuzzle({
 
           if (match && framing !== "not_visible") {
             wrongSinceRef.current = null;
+            wrongSignaledRef.current = false;
+            if (incorrect) setIncorrect(false);
             if (matchSinceRef.current == null) matchSinceRef.current = now;
             const held = now - matchSinceRef.current;
             setHoldProgress(Math.min(1, held / HOLD_MS));
             if (held >= HOLD_MS) {
-              submitAnswer(target.answer);
+              submitCorrect(target.answer);
               return;
             }
           } else {
             matchSinceRef.current = null;
             setHoldProgress(0);
 
-            // Holding a clear wrong complete gesture (e.g. fist vs palm) counts as an attempt.
+            // Holding a clear wrong gesture ≥2s → Incorrect signal; stay open.
             const wrongComplete =
               altAnswer != null &&
               altAnswer !== target.answer &&
@@ -249,11 +250,12 @@ export function CameraPuzzle({
             if (wrongComplete) {
               if (wrongSinceRef.current == null) wrongSinceRef.current = now;
               if (now - wrongSinceRef.current >= WRONG_HOLD_MS) {
-                wrongSinceRef.current = null;
-                submitAnswer(altAnswer!);
+                signalIncorrect(altAnswer!);
               }
             } else {
               wrongSinceRef.current = null;
+              wrongSignaledRef.current = false;
+              if (incorrect) setIncorrect(false);
             }
           }
         } catch {
@@ -396,23 +398,15 @@ export function CameraPuzzle({
               HUMAN VERIFIED
             </div>
           )}
-          {!verified && incorrect && (
-            <div
-              className="absolute inset-0 grid place-items-center text-[14px] tracking-[0.2em]"
-              style={{ color: "var(--hot)", background: "rgba(40,8,12,0.72)" }}
-            >
-              INCORRECT
-            </div>
-          )}
         </div>
 
         {incorrect && !verified && (
           <p
-            className="mb-2 text-[12px] font-semibold tracking-[0.12em]"
+            className="mb-2 text-[12px] font-semibold tracking-[0.14em]"
             style={{ color: "var(--hot)" }}
             role="alert"
           >
-            Incorrect — try a different gesture.
+            Incorrect — keep trying.
           </p>
         )}
 
