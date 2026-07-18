@@ -224,7 +224,7 @@ export function CameraPuzzle({
           if (match && framing !== "not_visible") {
             wrongSinceRef.current = null;
             wrongSignaledRef.current = false;
-            if (incorrect) setIncorrect(false);
+            setIncorrect(false);
             if (matchSinceRef.current == null) matchSinceRef.current = now;
             const held = now - matchSinceRef.current;
             setHoldProgress(Math.min(1, held / HOLD_MS));
@@ -255,7 +255,7 @@ export function CameraPuzzle({
             } else {
               wrongSinceRef.current = null;
               wrongSignaledRef.current = false;
-              if (incorrect) setIncorrect(false);
+              setIncorrect(false);
             }
           }
         } catch {
