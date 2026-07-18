@@ -9,18 +9,18 @@ type SealedDiceProps = {
   roll: Roll | null;
 };
 
-/** Three exchange dice: tumble on open, stay sealed in play, reveal on win. */
+/** Three exchange dice: tumble on open, stay sealed in play, reveal on win/lose. */
 export function SealedDice({ state, roll }: SealedDiceProps) {
   const faces =
     state === "revealed" && roll
       ? [
-          { label: "d7", value: String(roll.d7) },
-          { label: "d10", value: String(roll.d10a) },
-          { label: "d10", value: String(roll.d10b) },
+          { label: "d6", value: String(roll.d6a) },
+          { label: "d6", value: String(roll.d6b) },
+          { label: "d10", value: String(roll.d10) },
         ]
       : [
-          { label: "d7", value: "?" },
-          { label: "d10", value: "?" },
+          { label: "d6", value: "?" },
+          { label: "d6", value: "?" },
           { label: "d10", value: "?" },
         ];
 
@@ -58,7 +58,7 @@ export function SealedDice({ state, roll }: SealedDiceProps) {
       >
         {state === "rolling" && "MIRA is sealing the roll…"}
         {state === "sealed" && "Sealed. Quote markets — faces stay hidden."}
-        {state === "revealed" && "Roll revealed. Trading reopened."}
+        {state === "revealed" && "Roll revealed."}
       </p>
     </div>
   );

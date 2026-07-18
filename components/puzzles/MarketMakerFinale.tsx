@@ -66,20 +66,17 @@ type MarketMakerFinaleProps = {
 export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
   const completePuzzle = useGameStore((s) => s.completePuzzle);
   const setStatus = useGameStore((s) => s.setStatus);
-  const alreadySolved = useGameStore((s) =>
-    s.completedPuzzleIds.includes(PUZZLE.id)
-  );
 
   const [diceState, setDiceState] = useState<DiceVisualState>("rolling");
   const [roll, setRoll] = useState<Roll | null>(null);
   const [round, setRound] = useState(1);
   const [history, setHistory] = useState<RoundResult[]>([]);
-  const [phase, setPhase] = useState<"markets" | "guess">("markets");
+  const [phase, setPhase] = useState<"markets" | "guess" | "lost">("markets");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guessError, setGuessError] = useState<string | null>(null);
   const [caption, setCaption] = useState<string | null>(
-    "Three sealed dice. Make markets on SUM and PRODUCT — I answer Buy, Sell, or Hold."
+    "Two d6 and one d10, sealed. Make markets on SUM and PRODUCT — I answer Buy, Sell, or Hold. One guess only."
   );
   const [captionUrgency, setCaptionUrgency] = useState<
     "calm" | "focused" | "urgent" | "critical"
@@ -96,9 +93,9 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
   const [sumAsk, setSumAsk] = useState("");
   const [prodBid, setProdBid] = useState("");
   const [prodAsk, setProdAsk] = useState("");
-  const [guessD7, setGuessD7] = useState("");
-  const [guessD10a, setGuessD10a] = useState("");
-  const [guessD10b, setGuessD10b] = useState("");
+  const [guessD6a, setGuessD6a] = useState("");
+  const [guessD6b, setGuessD6b] = useState("");
+  const [guessD10, setGuessD10] = useState("");
 
   const logEndRef = useRef<HTMLDivElement>(null);
   const lineId = useRef(0);
@@ -134,7 +131,7 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
     const seal = window.setTimeout(() => {
       setDiceState("sealed");
       setCaption(
-        "Roll sealed. Quote SUM and PRODUCT. Tight markets (bid = ask) that HOLD confirm exact values."
+        "Roll sealed (2d6 + d10). Quote SUM and PRODUCT. Tight HOLD confirms exact values. One final guess."
       );
       setCaptionUrgency("calm");
       setLog((prev) => [
@@ -142,12 +139,12 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
         {
           id: "speak-sealed",
           kind: "speak",
-          text: "Roll sealed. Quote SUM and PRODUCT. Tight markets (bid = ask) that HOLD confirm exact values.",
+          text: "Roll sealed (2d6 + d10). Quote SUM and PRODUCT. Tight HOLD confirms exact values. One final guess.",
         },
         {
           id: "sys-sealed",
           kind: "system",
-          text: "Dice sealed. Faces hidden until you unlock the floor.",
+          text: "Dice sealed. Faces hidden until resolve.",
         },
       ]);
     }, 1800);
@@ -167,7 +164,7 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
     setPhase("guess");
     setError(null);
     miraSpeak(
-      "Enough tape. Name the three dice — d7 first, then the two d10s in any order.",
+      "Enough tape. One guess: two d6 (any order) and the d10. Wrong call locks the exchange.",
       "urgent"
     );
   }, [miraSpeak]);
@@ -269,15 +266,21 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
   }
 
   function submitGuess() {
-    const d7 = toInt(guessD7);
-    const d10a = toInt(guessD10a);
-    const d10b = toInt(guessD10b);
-    if (d7 === null || d10a === null || d10b === null) {
+    if (phase === "lost") return;
+    const d6a = toInt(guessD6a);
+    const d6b = toInt(guessD6b);
+    const d10 = toInt(guessD10);
+    if (d6a === null || d6b === null || d10 === null) {
       setGuessError("Enter all three die values.");
       return;
     }
+    if (d6a < 1 || d6a > 6 || d6b < 1 || d6b > 6 || d10 < 1 || d10 > 10) {
+      setGuessError("Each d6 is 1–6 and the d10 is 1–10.");
+      return;
+    }
 
-    const guess = { d7, d10a, d10b };
+    // One guess only. Correct wins; anything else loses the campaign.
+    const guess = { d6a, d6b, d10 };
     emit("answer_submit", { puzzleId: PUZZLE.id, kind: "guess", guess });
 
     if (validate(PUZZLE.validatorKey, guess)) {
@@ -296,10 +299,24 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
       return;
     }
 
+    const revealed = getSession();
+    setRoll(revealed);
+    setDiceState("revealed");
     emit("wrong_attempt", { puzzleId: PUZZLE.id, kind: "guess" });
-    setGuessError("That roll is wrong. Read the tape again.");
-    miraSpeak("No. Those faces are not what I sealed.", "critical");
-    pushLog("think", "Guess rejected by the exchange engine.");
+    setGuessError(null);
+    setPhase("lost");
+    miraSpeak(
+      "Wrong call — the exchange stays locked. You only get one guess.",
+      "critical"
+    );
+    pushLog(
+      "system",
+      revealed
+        ? `Roll was d6=${revealed.d6a} · d6=${revealed.d6b} · d10=${revealed.d10}.`
+        : "Guess rejected. Session cleared."
+    );
+    endSession();
+    setStatus("lost");
   }
 
   return (
@@ -432,20 +449,13 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
             {phase === "guess" && (
               <div className="flex flex-col gap-3">
                 <p className="text-[11px]" style={{ color: "var(--dim)" }}>
-                  d7 is 1–7; each d10 is 1–10. Order of the two d10s does not matter.
+                  Each d6 is 1–6; the d10 is 1–10. Order of the two d6s does not
+                  matter. One guess only — wrong loses.
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  <GuessInput label="d7" value={guessD7} onChange={setGuessD7} />
-                  <GuessInput
-                    label="d10"
-                    value={guessD10a}
-                    onChange={setGuessD10a}
-                  />
-                  <GuessInput
-                    label="d10"
-                    value={guessD10b}
-                    onChange={setGuessD10b}
-                  />
+                  <GuessInput label="d6" value={guessD6a} onChange={setGuessD6a} />
+                  <GuessInput label="d6" value={guessD6b} onChange={setGuessD6b} />
+                  <GuessInput label="d10" value={guessD10} onChange={setGuessD10} />
                 </div>
                 {guessError && (
                   <p className="text-[11px]" style={{ color: "var(--hot)" }}>
@@ -459,6 +469,19 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
                 >
                   Submit final guess
                 </button>
+              </div>
+            )}
+
+            {phase === "lost" && (
+              <div className="flex flex-col gap-2">
+                <p className="text-[12px] font-bold" style={{ color: "var(--hot)" }}>
+                  Wrong call — the exchange stays locked.
+                </p>
+                {roll && (
+                  <p className="font-mono text-[11px]" style={{ color: "var(--dim)" }}>
+                    The roll was d6={roll.d6a} · d6={roll.d6b} · d10={roll.d10}.
+                  </p>
+                )}
               </div>
             )}
           </div>

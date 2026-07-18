@@ -44,7 +44,7 @@ export default function MarketMakerDemoPage() {
         {revealed && (
           <span className="text-[10px]" style={{ color: "var(--dim)" }}>
             {roll
-              ? `d7=${roll.d7} · d10=${roll.d10a} · d10=${roll.d10b}`
+              ? `d6=${roll.d6a} · d6=${roll.d6b} · d10=${roll.d10}`
               : "no session"}
           </span>
         )}
