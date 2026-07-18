@@ -37,7 +37,9 @@ function TerminalPuzzle({
 }) {
   const [value, setValue] = useState("");
   const [shake, setShake] = useState(false);
+  const [incorrect, setIncorrect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const incorrectTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -66,8 +68,16 @@ function TerminalPuzzle({
 
     emit("wrong_attempt", { puzzleId: puzzle.id, answer });
     setShake(true);
+    setIncorrect(true);
     setValue("");
     window.setTimeout(() => setShake(false), 300);
+    if (incorrectTimerRef.current != null) {
+      window.clearTimeout(incorrectTimerRef.current);
+    }
+    incorrectTimerRef.current = window.setTimeout(() => {
+      setIncorrect(false);
+      incorrectTimerRef.current = null;
+    }, 1600);
   }
 
   const isChoice = puzzle.interaction === "object_selection";
@@ -107,6 +117,16 @@ function TerminalPuzzle({
 
         <PuzzleAid puzzleId={puzzle.id} />
 
+        {incorrect && (
+          <p
+            className="mb-3 text-[12px] font-semibold tracking-[0.12em]"
+            style={{ color: "var(--hot)" }}
+            role="alert"
+          >
+            Incorrect
+          </p>
+        )}
+
         {isChoice ? (
           <div className="flex gap-3">
             {["SWITCH", "STAY"].map((choice) => (
@@ -130,16 +150,19 @@ function TerminalPuzzle({
             <input
               ref={inputRef}
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => {
+                setValue(e.target.value);
+                if (incorrect) setIncorrect(false);
+              }}
               inputMode={puzzle.interaction === "numeric" ? "numeric" : "text"}
               autoComplete="off"
               placeholder="_"
               aria-label="Your answer"
               className="flex-1 border-2 px-3 py-2 text-base tracking-widest outline-none"
               style={{
-                borderColor: "var(--edge)",
+                borderColor: incorrect ? "var(--hot)" : "var(--edge)",
                 background: "var(--panel)",
-                color: "var(--accent)",
+                color: incorrect ? "var(--hot)" : "var(--accent)",
               }}
             />
             <button type="submit" className="px-btn px-4 py-2 text-[10px]">

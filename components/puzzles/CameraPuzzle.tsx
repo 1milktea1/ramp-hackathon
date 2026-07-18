@@ -17,9 +17,9 @@ import { detectHands, preloadHandLandmarker } from "@/lib/mediapipe-hands";
 import { emit } from "@/lib/events";
 import { validate } from "@/lib/validators";
 
-const HOLD_MS = 3000;
+const HOLD_MS = 2500;
 const SPACE_HOLD_MS = 2000;
-const WRONG_HOLD_MS = 3000;
+const WRONG_HOLD_MS = 2500;
 
 type LiveStatus = {
   confidence: number;
@@ -75,7 +75,7 @@ function gestureMatches(
 
 /**
  * Live MediaPipe hand panel (README § MediaPipe / visual answers).
- * Hold the target gesture ~3s to submit. Space-hold (2s) is the fallback.
+ * Hold the target gesture ~2.5s to submit. Space-hold (2s) is the fallback.
  */
 export function CameraPuzzle({
   puzzle,
@@ -106,6 +106,8 @@ export function CameraPuzzle({
   });
   const [shake, setShake] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [incorrect, setIncorrect] = useState(false);
+  const incorrectTimerRef = useRef<number | null>(null);
 
   function submitAnswer(answer: string) {
     if (submittedRef.current) return;
@@ -113,6 +115,7 @@ export function CameraPuzzle({
 
     if (validate(puzzle.validatorKey, answer)) {
       submittedRef.current = true;
+      setIncorrect(false);
       setVerified(true);
       emit("puzzle_complete", { puzzleId: puzzle.id });
       window.setTimeout(() => onSolved(puzzle.id), 450);
@@ -121,10 +124,18 @@ export function CameraPuzzle({
 
     emit("wrong_attempt", { puzzleId: puzzle.id, answer });
     setShake(true);
+    setIncorrect(true);
     setHoldProgress(0);
     matchSinceRef.current = null;
     wrongSinceRef.current = null;
+    if (incorrectTimerRef.current != null) {
+      window.clearTimeout(incorrectTimerRef.current);
+    }
     window.setTimeout(() => setShake(false), 320);
+    incorrectTimerRef.current = window.setTimeout(() => {
+      setIncorrect(false);
+      incorrectTimerRef.current = null;
+    }, 1600);
   }
 
   useEffect(() => {
@@ -385,7 +396,25 @@ export function CameraPuzzle({
               HUMAN VERIFIED
             </div>
           )}
+          {!verified && incorrect && (
+            <div
+              className="absolute inset-0 grid place-items-center text-[14px] tracking-[0.2em]"
+              style={{ color: "var(--hot)", background: "rgba(40,8,12,0.72)" }}
+            >
+              INCORRECT
+            </div>
+          )}
         </div>
+
+        {incorrect && !verified && (
+          <p
+            className="mb-2 text-[12px] font-semibold tracking-[0.12em]"
+            style={{ color: "var(--hot)" }}
+            role="alert"
+          >
+            Incorrect — try a different gesture.
+          </p>
+        )}
 
         <p className="mb-2 text-[12px]" style={{ color: "var(--txt)" }}>
           {target.instruction}
@@ -394,16 +423,25 @@ export function CameraPuzzle({
           {framingMessage(status.framing)}
         </p>
 
-        <div className="mb-1 flex justify-between text-[9px] tracking-[0.14em]" style={{ color: "var(--accent)" }}>
+        <div
+          className="mb-1 flex justify-between text-[9px] tracking-[0.14em]"
+          style={{ color: incorrect ? "var(--hot)" : "var(--accent)" }}
+        >
           <span>Detection: {detectionPct}%</span>
           <span>Hold steady</span>
         </div>
-        <div className="mb-3 h-2 border" style={{ borderColor: "var(--edge)", background: "var(--panel)" }}>
+        <div
+          className="mb-3 h-2 border"
+          style={{
+            borderColor: incorrect ? "var(--hot)" : "var(--edge)",
+            background: "var(--panel)",
+          }}
+        >
           <div
             className="h-full transition-[width] duration-75"
             style={{
               width: `${Math.round(holdProgress * 100)}%`,
-              background: "var(--accent)",
+              background: incorrect ? "var(--hot)" : "var(--accent)",
             }}
           />
         </div>
