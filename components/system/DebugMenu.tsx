@@ -147,7 +147,8 @@ export function DebugMenu() {
             className="px-btn col-span-2 px-2 py-1.5 text-[10px]"
             onClick={() => {
               if (!campaign) return;
-              for (const sc of campaign.scenes) {
+              // Clear stages 1–2 only; stage 3 is the live market panel.
+              for (const sc of campaign.scenes.slice(0, -1)) {
                 for (const id of sc.requiredPuzzleIds) completePuzzle(id);
               }
               setSceneIndex(campaign.scenes.length - 1);
@@ -155,7 +156,7 @@ export function DebugMenu() {
               setOpen(false);
             }}
           >
-            Jump to exchange finale
+            Jump to exchange desk
           </button>
         ) : null}
       </div>
@@ -163,7 +164,7 @@ export function DebugMenu() {
       {campaign ? (
         <p className="mt-3 text-[10px]" style={{ color: "var(--dim)" }}>
           {campaign.id === "new-york-quant"
-            ? "NYC finale: market-maker (Shift+D → skip stages, then Enter exchange)"
+            ? "NYC stage 3: center Exchange Desk → market panel"
             : `Finale code: ${finalCode(campaign.scenes)}`}
         </p>
       ) : null}

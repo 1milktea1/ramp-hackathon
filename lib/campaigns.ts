@@ -18,8 +18,10 @@ import type {
 
 /** One question as authored. Expanded into a PuzzleDefinition below. */
 type QuestionSeed = {
-  /** Bank ID from plan.md §3 — doubles as the puzzle id and validatorKey. */
+  /** Bank ID from plan.md §3 — doubles as the puzzle id (and validatorKey unless overridden). */
   id: string;
+  /** Optional when the validator registry key differs from the puzzle id. */
+  validatorKey?: string;
   category: PuzzleCategory;
   interaction: PuzzleInteraction;
   /** Which panorama view holds this question: Q1=left, Q2=center, Q3=right. */
@@ -50,7 +52,7 @@ function toPuzzle(q: QuestionSeed): PuzzleDefinition {
     category: q.category,
     interaction: q.interaction,
     prompt: q.prompt,
-    validatorKey: q.id,
+    validatorKey: q.validatorKey ?? q.id,
     expectedDurationSec: q.sec,
     hints: {
       level1: q.l1,
@@ -304,44 +306,22 @@ const NY_STAGE_2: QuestionSeed[] = [
   },
 ];
 
+// Stage 3 is a single center-wall exchange desk — the market-maker panel.
+// Left/right walls stay empty so rotating still works, but only CENTER activates.
 const NY_STAGE_3: QuestionSeed[] = [
   {
-    id: "ny_locker_doors",
-    category: "logic",
-    interaction: "numeric",
-    view: "left",
-    device: "Twenty Doors",
-    prompt:
-      "20 doors, all shut. Pass k toggles every multiple of k, for k = 1..20. Enter how many end open.",
-    answerText: "4",
-    l1: "A door is toggled once for each of its divisors.",
-    l2: "It ends open only with an odd number of divisors — which is true of perfect squares.",
-    sec: 75,
-  },
-  {
-    id: "ny_bayes_coin",
+    id: "nyc-finale-market",
+    validatorKey: "ny-finale-market",
     category: "probability",
     interaction: "numeric",
     view: "center",
-    device: "Coin Vault",
+    device: "Exchange Desk",
     prompt:
-      "2 fair coins and 1 two-headed coin. Draw one at random, flip HEADS. Enter the % chance it is the two-headed coin.",
-    answerText: "50",
-    l1: "Heads is more likely to appear from the two-headed coin than a fair one.",
-    l2: "Weigh 1/3 × 1 against 2/3 × 1/2, then compare the two.",
-    sec: 90,
-  },
-  {
-    id: "ny_weighted_ev",
-    category: "probability",
-    interaction: "numeric",
-    view: "right",
-    device: "Returns Board",
-    prompt: "Returns: +$12 at 25%, +$2 at 50%, −$4 at 25%. Enter the expected value.",
-    answerText: "3",
-    l1: "Weight each outcome by its own probability, then add.",
-    l2: "12(0.25) + 2(0.50) + (−4)(0.25) — mind the sign on the last term.",
-    sec: 70,
+      "The exchange is locked. Make markets on the sum and product of the sealed roll (one d7, two d10), read my Buy/Sell/Hold, then name all three dice to reopen trading.",
+    answerText: "the sealed dice",
+    l1: "Buy means my value is above your ask; Sell means it is below your bid.",
+    l2: "Quote a tight market (bid = ask). A HOLD there confirms the exact value.",
+    sec: 180,
   },
 ];
 
@@ -383,7 +363,13 @@ export const NEW_YORK: CampaignDefinition = {
   scenes: [
     toScene("ny-1", "23rd Street Subway", "Flatiron · Manhattan", "/bg/ny-1.png", NY_STAGE_1, "ny-2"),
     toScene("ny-2", "Ramp Headquarters", "West 23rd St · Manhattan", "/bg/ny-2.png", NY_STAGE_2, "ny-3"),
-    toScene("ny-3", "Midtown Market Data Floor", "Midtown · Manhattan", "/bg/ny-3.png", NY_STAGE_3),
+    toScene(
+      "ny-3",
+      "Lower Manhattan Exchange",
+      "Exchange · Manhattan",
+      "/bg/ny-3.png",
+      NY_STAGE_3
+    ),
   ],
 };
 

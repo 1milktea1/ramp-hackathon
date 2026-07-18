@@ -15,6 +15,10 @@ import { PuzzleModal } from "../puzzles/PuzzleModal";
 import { FinalePanel } from "../campaign/FinalePanel";
 import { MarketMakerFinale } from "../puzzles/MarketMakerFinale";
 
+function isMarketPuzzle(puzzle: PuzzleDefinition | null): boolean {
+  return puzzle?.validatorKey === "ny-finale-market";
+}
+
 export function SceneShell({
   campaign,
   onExit,
@@ -40,7 +44,8 @@ export function SceneShell({
   const viewIndex = VIEW_ORDER.indexOf(view);
   const stageSolved = isStageSolved(scene, completedPuzzleIds);
   const isLastScene = sceneIndex === campaign.scenes.length - 1;
-  const isNycFinale = campaign.id === "new-york-quant";
+  const isNyc = campaign.id === "new-york-quant";
+  const marketOpen = isMarketPuzzle(openPuzzle);
 
   // --- Timer -------------------------------------------------
   useEffect(() => {
@@ -52,21 +57,36 @@ export function SceneShell({
   // --- Scene entry -------------------------------------------
   useEffect(() => {
     emit("scene_enter", { sceneId: scene.id });
-    setCaption(`${scene.title}. Three terminals here — turn to find them all.`);
-  }, [scene.id, scene.title]);
-
-  // DebugMenu can jump straight into the NYC exchange finale.
-  useEffect(() => {
-    if (!isNycFinale) return;
-    const open = () => {
-      setFinaleOpen(true);
+    if (scene.requiredPuzzleIds.length === 1 && isMarketPuzzle(scene.puzzles[0])) {
       setCaption(
-        "Lower Manhattan Exchange. Make markets — I'll answer Buy, Sell, or Hold."
+        `${scene.title}. Face center and activate the Exchange Desk — MIRA is waiting on the other side of the book.`
       );
+      // Land on the only interactive wall.
+      setView("center");
+    } else {
+      setCaption(`${scene.title}. Three terminals here — turn to find them all.`);
+    }
+  }, [scene.id, scene.title, scene.requiredPuzzleIds.length, scene.puzzles, setView]);
+
+  // DebugMenu: jump to NYC stage 3 and open the center market panel.
+  useEffect(() => {
+    if (!isNyc) return;
+    const open = () => {
+      const last = campaign.scenes[campaign.scenes.length - 1];
+      const market =
+        last.puzzles.find((p) => p.validatorKey === "ny-finale-market") ?? null;
+      setSceneIndex(campaign.scenes.length - 1);
+      setView("center");
+      if (market) {
+        setOpenPuzzle(market);
+        setCaption(
+          "Lower Manhattan Exchange. Make markets — I'll answer Buy, Sell, or Hold."
+        );
+      }
     };
     window.addEventListener("debug-open-nyc-finale", open);
     return () => window.removeEventListener("debug-open-nyc-finale", open);
-  }, [isNycFinale]);
+  }, [isNyc, campaign, setSceneIndex, setView]);
 
   const rotate = useCallback(
     (delta: number) => {
@@ -77,9 +97,7 @@ export function SceneShell({
     [viewIndex, setView]
   );
 
-  // --- Keyboard rotation -------------------------------------
-  // Suspended whenever a puzzle/finale owns the keyboard, otherwise arrow-key
-  // input inside a terminal would also spin the room.
+  // Suspend panorama keys while any panel owns the keyboard.
   useEffect(() => {
     if (openPuzzle || finaleOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -97,15 +115,20 @@ export function SceneShell({
     const nowComplete = [...completedPuzzleIds, puzzleId];
     if (isStageSolved(scene, nowComplete)) {
       const endLine = isLastScene
-        ? isNycFinale
-          ? "Digit tray complete — enter the exchange for the market-maker finale."
-          : "That completes the code."
+        ? "That completes the code."
         : "Moving to the next location.";
       setCaption(
         `Stage clear. Recovered digit: ${stageHint(scene)}. ${endLine}`
       );
     } else {
-      setCaption("Logged. Two more terminals on this floor.");
+      const remaining =
+        scene.requiredPuzzleIds.length -
+        nowComplete.filter((id) => scene.requiredPuzzleIds.includes(id)).length;
+      setCaption(
+        remaining === 1
+          ? "Logged. One terminal left on this floor."
+          : "Logged. Two more terminals on this floor."
+      );
     }
   }
 
@@ -145,7 +168,11 @@ export function SceneShell({
 
         <MiraCaption message={caption} onDismiss={() => setCaption(null)} />
 
-        {openPuzzle && (
+        {marketOpen && openPuzzle && (
+          <MarketMakerFinale onClose={() => setOpenPuzzle(null)} />
+        )}
+
+        {openPuzzle && !marketOpen && (
           <PuzzleModal
             puzzle={openPuzzle}
             onSolved={handleSolved}
@@ -153,15 +180,12 @@ export function SceneShell({
           />
         )}
 
-        {finaleOpen &&
-          (isNycFinale ? (
-            <MarketMakerFinale onClose={() => setFinaleOpen(false)} />
-          ) : (
-            <FinalePanel
-              campaignId={campaign.id}
-              onClose={() => setFinaleOpen(false)}
-            />
-          ))}
+        {finaleOpen && !isNyc && (
+          <FinalePanel
+            campaignId={campaign.id}
+            onClose={() => setFinaleOpen(false)}
+          />
+        )}
       </div>
 
       <footer
@@ -180,19 +204,13 @@ export function SceneShell({
               Next location ▶
             </button>
           )}
-          {stageSolved && isLastScene && (
+          {/* SF only: digit-code lock. NYC wins inside the market panel. */}
+          {stageSolved && isLastScene && !isNyc && (
             <button
-              onClick={() => {
-                setFinaleOpen(true);
-                if (isNycFinale) {
-                  setCaption(
-                    "Lower Manhattan Exchange. Make markets — I'll answer Buy, Sell, or Hold."
-                  );
-                }
-              }}
+              onClick={() => setFinaleOpen(true)}
               className="px-btn px-3 py-2 text-[10px]"
             >
-              {isNycFinale ? "Enter the exchange ▶" : "Enter final code ▶"}
+              Enter final code ▶
             </button>
           )}
           <button

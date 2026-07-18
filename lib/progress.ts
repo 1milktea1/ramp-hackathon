@@ -35,9 +35,8 @@ export const HINT_DIGITS: Record<string, number> = {
   ny_coin_flip_ev: 2,
   ny_balls_no_replace: 3,
   ny_monty_reveal: 1,
-  ny_locker_doors: 4,
-  ny_bayes_coin: 0,
-  ny_weighted_ev: 3,
+  // Stage 3 is the single market-maker desk — digit 7 keeps tray code 467.
+  "nyc-finale-market": 7,
 };
 
 /** Ones digit of the sum of a stage's three hint digits. */
@@ -79,7 +78,7 @@ export function revealedDigits(
   );
 }
 
-/** The finale code, computed — never hardcoded. SF → "577", NYC → "467". */
+/** The finale code, computed — never hardcoded. SF → "577", NYC tray → "467". */
 export function finalCode(scenes: SceneDefinition[]): string {
   return scenes.map((s) => String(stageHint(s))).join("");
 }
