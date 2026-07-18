@@ -19,7 +19,7 @@ import { validate } from "@/lib/validators";
 
 const HOLD_MS = 2000;
 const SPACE_HOLD_MS = 2000;
-const WRONG_HOLD_MS = 2000;
+const WRONG_HOLD_MS = 1000;
 
 type LiveStatus = {
   confidence: number;
