@@ -17,6 +17,7 @@ import {
   getTickerSession,
   type Quote,
 } from "./bayesian-ticker";
+import { getArbRushResult } from "./arb-rush";
 
 /** Register a puzzle whose answer is a single number. */
 function numeric(key: string, expected: number): void {
@@ -77,6 +78,13 @@ registerValidator("ny-ticker-quote", (input) => {
 registerValidator("ny-ticker-card", (input) =>
   checkCard(getTickerSession()?.card ?? null, input)
 );
+
+// NYC Arb Rush finale: win iff player bankroll > rival after 3 epochs.
+// Component calls validate("ny-arbrush", "WIN") on DONE; engine stores result.
+registerValidator("ny-arbrush", (input) => {
+  const { result } = getArbRushResult();
+  return result === "WIN" && normalizeString(input).toUpperCase() === "WIN";
+});
 
 // --- Finale codes (derived) ---------------------------------
 word("sf-finale-code", finalCode(SAN_FRANCISCO.scenes)); // → "577"
