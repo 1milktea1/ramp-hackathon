@@ -304,12 +304,12 @@ Validator keys reuse the bank IDs directly from §3 / `puzzle-bank.md` — no se
 | `sf_missing_number` | `3` | SF-1 | `3` |
 | `sf_contains_dup` | `1` | SF-1 | `1` |
 | `sf_best_time_stock` | `5` | SF-2 | `5` |
-| `sf_backspace_compare` | `crsor` (resolved buffer) | SF-2 | `1` |
+| `sf_unique_path_count` | `28` | SF-2 | `8` |
 | `sf_valid_parens` | `1` | SF-2 | `1` |
 | `sf_binary_search` | `3` | SF-3 | `3` |
 | `sf_max_subarray` | `6` | SF-3 | `6` |
 | `sf_product_except_self` | `8` | SF-3 | `8` |
-| `sf-finale-code` | `577` | SF finale | — |
+| `sf-finale-code` | `547` | SF finale | — |
 | `ny_two_dice_sum7` | `6` | NYC-1 | `6` |
 | `ny_card_ace` | `13` | NYC-1 | `3` |
 | `ny_handshakes` | `15` | NYC-1 | `5` |
@@ -321,7 +321,7 @@ Validator keys reuse the bank IDs directly from §3 / `puzzle-bank.md` — no se
 | `ny_weighted_ev` | `3` | NYC-3 | `3` |
 | `ny-finale-code` | `467` | NYC finale | — |
 
-`validate("sf-finale-code", input)` and `validate("ny-finale-code", input)` don't need their own hardcoded digits baked in twice — compute the expected code at runtime as `stage1Hint + stage2Hint + stage3Hint` from the store's already-validated per-puzzle answers, so the two never drift apart. The `577` / `467` values above are the worked answer for reference and testing only.
+`validate("sf-finale-code", input)` and `validate("ny-finale-code", input)` don't need their own hardcoded digits baked in twice — compute the expected code at runtime as `stage1Hint + stage2Hint + stage3Hint` from the store's already-validated per-puzzle answers, so the two never drift apart. The `547` / `467` values above are the worked answer for reference and testing only.
 
 Full prompts, flavor text, and hint-level copy for each `validatorKey` above live in `puzzle-bank.md`.
 
