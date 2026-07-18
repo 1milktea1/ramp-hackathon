@@ -57,57 +57,59 @@ Everything below is a hard requirement. If it is not on this list, it does not g
 
 ---
 
-## 3. Content Map — 3 Scenes + Planted Fourth Digits
+## 3. Content Map — 3 Scenes + Planted Fourth Digits (sourced from `puzzle-bank.md`)
 
 ### Critical fix
 
-README finales assume **four recovered values**, but the MVP cuts scenes 4–5. Keep PINs `9793` / `3595` by **planting** the missing fourth value on a sponsor node card (no full puzzle). Put finale PIN entry **inside scene 3** after the principal puzzle.
+README finales assume **four recovered values**, but the MVP cuts scenes 4–5. Keep the 4-digit finale-PIN structure by **planting** the missing fourth value on a sponsor node card (no full puzzle). Put finale PIN entry **inside scene 3** after the principal puzzle.
+
+Every principal puzzle below is now pulled straight from `puzzle-bank.md` (Person B's OA-style, difficulty-labeled draft) instead of a one-off bespoke puzzle, so content and validators trace back to a single source. Swapping the puzzles changed the recovered digits, so **both finale PINs are recomputed from scratch** — see the ordering notes.
 
 ### San Francisco — System Failure (SWE)
 
-| Scene | Location | Principal puzzle | Answer | Progression task |
+| Scene | Location | Principal puzzle (bank ID · difficulty) | Answer | Progression task |
 |---|---|---|---|---|
-| SF-1 | SoMa Transit Stop | Zero-based index: `[8,3,1,7,4]` → index 3 | `7` | Drag cable into port |
-| SF-2 | Cursor Development Floor | Array shows `[4,9,2]`; Backspace deletes corrupt `9` → `[4,2]` | `9` (removed) | Optional: type `C-U-R-S-O-R` if time |
-| SF-3 | OpenAI Mission Bay Node | Frequency: unique packet `9` | `9` | Camera open-palm → then finale PIN |
+| SF-1 | SoMa Transit Stop | `sf_missing_number` · **E1** — NeetCode "Missing Number": board shows `[0,1,2,4,5]`, find the gap | `3` | Drag cable into port |
+| SF-2 | Cursor Development Floor | `sf_contains_dup` · **E1** — NeetCode "Contains Duplicate": array `[4,1,9,6,1]` on terminal; arrow-nav to a duplicate, Backspace deletes it | `1` (duplicate removed) | Optional: type `C-U-R-S-O-R` if time |
+| SF-3 | OpenAI Mission Bay Node | Frequency puzzle (Single Number / Contains-Duplicate family, **E1**): unique packet `9` | `9` | Camera open-palm → then finale PIN |
 
-**Planted fourth value:** Capacity `3` on a Ramp node card / remote monitor in SF-1 or SF-3 (status text only).
+**Planted fourth value:** `sf_best_time_stock` · **E1** — NeetCode "Best Time to Buy/Sell Stock": Ramp node card shows prices `[7,1,5,3,6]`; status text asks for the max gain. No full puzzle UI, just short flavor text with the math worked in.
 
 **Recovered values for finale:**
 
-| Label | Source | Value |
-|---|---|---|
-| INDEX | SF-1 | `7` |
-| BUILD | SF-2 | `9` |
-| PACKET | SF-3 | `9` |
-| CAPACITY | Planted Ramp node | `3` |
+| Label | Source | Bank ID | Value |
+|---|---|---|---|
+| INDEX | SF-1 | `sf_missing_number` | `3` |
+| BUILD | SF-2 | `sf_contains_dup` | `1` |
+| PACKET | SF-3 | (frequency, unique-packet) | `9` |
+| CAPACITY | Planted Ramp node | `sf_best_time_stock` | `5` |
 
-**Ordering note:** `BUILD → INDEX → PACKET → CAPACITY` → PIN **`9793`**
+**Ordering note:** `BUILD → INDEX → PACKET → CAPACITY` → PIN **`1395`**
 
-**Finale interaction (end of SF-3):** after camera verification, terminal template `rollback --code ____`; engine validates `9793`.
+**Finale interaction (end of SF-3):** after camera verification, terminal template `rollback --code ____`; engine validates `1395`.
 
 ### New York — Market Lockdown (Quant)
 
-| Scene | Location | Principal puzzle | Answer | Progression task |
+| Scene | Location | Principal puzzle (bank ID · difficulty) | Answer | Progression task |
 |---|---|---|---|---|
-| NYC-1 | 23rd Street Subway | Sequence `2,6,12,20,?` → `30` | `30` | MetroCard swipe (speed check, generous) |
-| NYC-2 | Ramp Headquarters | EV of `{2,4,6,8}` = `5`; then bounds `4,6` | `5` then `4,6` | Dial / step NumericPuzzle |
-| NYC-3 | Midtown Market Data Floor | Sort latencies; median = `9` | `9` | Timed-key PIN (or type PIN if TimedKey slips) |
+| NYC-1 | 23rd Street Subway | `ny_handshakes` · **E1** — classic handshake brainteaser: "6 traders each shake every other trader's hand once" | `15` | MetroCard swipe (speed check, generous) |
+| NYC-2 | Ramp Headquarters | EV of `{2,4,6,8}` = `5` (Green Book Ch.2 fair-value family, same shape as `ny_balls_no_replace` / `ny_monty_reveal`); then bounds `4,6` | `5` then `4,6` | Dial / step NumericPuzzle |
+| NYC-3 | Midtown Market Data Floor | Sort latencies; median = `9` (Green Book Ch.4 order-statistic family, same shape as `ny_mean` / `ny_stdev_small`) | `9` | Timed-key PIN (or type PIN if TimedKey slips) |
 
-**Planted fourth value:** Relay digit-diff `5` (from conceptual `16` → `6-1`) on an OpenAI/Cursor node card in NYC-3. Optionally show `[4,1,8,6,3]` + “read index 1 then 3” as flavor so `16` is discoverable without a full scene 4.
+**Planted fourth value:** `ny_locker_doors` · **E2** — classic "100 lockers" toggle brainteaser (mini, n=20 doors, k=1..20 toggles) on an OpenAI/Cursor node card in NYC-3. No full puzzle UI — status text states the setup and the worked answer (perfect squares ≤20 stay open).
 
 **Recovered values for finale:**
 
-| Label | Source | Value |
-|---|---|---|
-| A | Subway ÷ 10 | `3` |
-| B | Ramp fair value | `5` |
-| C | Median latency | `9` |
-| D | Planted relay digit diff | `5` |
+| Label | Source | Bank ID | Value |
+|---|---|---|---|
+| A | NYC-1 handshake answer − 10 | `ny_handshakes` | `5` |
+| B | Ramp fair value | (EV family) | `5` |
+| C | Median latency | (order-statistic family) | `9` |
+| D | Planted locker-doors count | `ny_locker_doors` | `4` |
 
-**Finale board:** `A,B,C,D` → PIN **`3595`**
+**Finale board:** `A,B,C,D` → PIN **`5594`**
 
-**Finale interaction (end of NYC-3):** TimedKey sweeping columns; fallback = type `3595` in a terminal. Keyboard-beyond-typing is already satisfied by SF-2 Backspace if TimedKey is cut.
+**Finale interaction (end of NYC-3):** TimedKey sweeping columns; fallback = type `5594` in a terminal. Keyboard-beyond-typing is already satisfied by SF-2 Backspace if TimedKey is cut.
 
 ---
 
@@ -271,15 +273,17 @@ Hardcoded answers by puzzle / validator key. Unit-testable with Vitest; no UI re
 
 | validatorKey | Expected |
 |---|---|
-| `sf1-index` | `7` |
-| `sf2-array-clean` | `[4, 2]` |
+| `sf1-missing-number` | `3` |
+| `sf2-no-duplicates` | array has no duplicate values (start `[4,1,9,6,1]`, drop one `1`) |
 | `sf3-unique-packet` | `9` |
-| `sf-finale-pin` | `9793` |
-| `nyc1-sequence` | `30` |
+| `sf-finale-pin` | `1395` |
+| `nyc1-handshakes` | `15` |
 | `nyc2-ev` | `5` |
 | `nyc2-bounds` | `{ low: 4, high: 6 }` |
 | `nyc3-median` | `9` |
-| `nyc-finale-pin` | `3595` |
+| `nyc-finale-pin` | `5594` |
+
+Full prompts, flavor text, and hint-level copy for each `validatorKey` above live in `puzzle-bank.md`.
 
 ### 5.3 Event bus (`/lib/events.ts`)
 
@@ -464,8 +468,8 @@ H0.5 types+deploy
 - [ ] Kill AI API key → MIRA degrades to static hints; game still completable
 - [ ] Ask MIRA “what is an index?” mid SF-1 → concept answer, no spoiler
 - [ ] 3 wrong answers + idle ~60s → unsolicited Level 2+ nudge
-- [ ] Final PIN `9793` validates; wrong PIN does not
-- [ ] NYC PIN `3595` validates if campaign is in the demo path
+- [ ] Final PIN `1395` validates; wrong PIN does not
+- [ ] NYC PIN `5594` validates if campaign is in the demo path
 - [ ] Shift+D can skip / jump / add time for the live walkthrough
 
-**Judge script (lock at H4.5):** cold load → SF → debug skips as needed → show camera + Space → kill API key → static hints → reject bad PIN → enter `9793` → win.
+**Judge script (lock at H4.5):** cold load → SF → debug skips as needed → show camera + Space → kill API key → static hints → reject bad PIN → enter `1395` → win.
