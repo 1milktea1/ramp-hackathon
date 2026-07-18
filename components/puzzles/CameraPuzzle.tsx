@@ -18,9 +18,9 @@ import { detectHands, preloadHandLandmarker } from "@/lib/mediapipe-hands";
 import { emit } from "@/lib/events";
 import { validate } from "@/lib/validators";
 
-const HOLD_MS = 800;
+const HOLD_MS = 3000;
 const SPACE_HOLD_MS = 2000;
-const WRONG_HOLD_MS = 900;
+const WRONG_HOLD_MS = 3000;
 
 type LiveStatus = {
   confidence: number;
@@ -76,7 +76,7 @@ function gestureMatches(
 
 /**
  * Live MediaPipe hand panel (README § MediaPipe / visual answers).
- * Hold the target gesture ~0.8s to submit. Space-hold (2s) is the fallback.
+ * Hold the target gesture ~3s to submit. Space-hold (2s) is the fallback.
  */
 export function CameraPuzzle({
   puzzle,
