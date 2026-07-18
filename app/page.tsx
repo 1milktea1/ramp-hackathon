@@ -5,6 +5,7 @@ import type { CampaignId } from "@/lib/types";
 import { CAMPAIGN_LIST, getCampaign } from "@/lib/campaigns";
 import { useGameStore } from "@/lib/store";
 import { SceneShell } from "@/components/scene/SceneShell";
+import { ResultsScreen } from "@/components/system/ResultsScreen";
 import "@/lib/validators.answers";
 
 export default function Home() {
@@ -16,6 +17,19 @@ export default function Home() {
 
   if (campaignId && status === "playing") {
     return <SceneShell campaign={getCampaign(campaignId)} onExit={reset} />;
+  }
+
+  // Won or lost — the timer sets "lost" itself, so this also catches expiry.
+  if (campaignId && (status === "won" || status === "lost")) {
+    const campaign = getCampaign(campaignId);
+    return (
+      <ResultsScreen
+        campaign={campaign}
+        won={status === "won"}
+        onRestart={() => selectCampaign(campaign.id, campaign.durationSec)}
+        onExit={reset}
+      />
+    );
   }
 
   return (
