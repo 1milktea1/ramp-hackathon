@@ -66,13 +66,10 @@ function buildUserPrompt(req: HintRequest): string {
     `Hints already given: ${req.hintsGiven}`,
     `Time remaining (sec): ${req.timeRemainingSec}`,
     `Seconds since meaningful progress: ${req.secondsSinceMeaningfulProgress}`,
-    req.playerMessage ? `Player asked: "${req.playerMessage}"` : "",
     "",
     `Aim your hint at strength level ${targetLevel} (of 4). Return your own`,
     `independent "closeness" estimate as well.`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].join("\n");
 }
 
 type OpenAiHint = {

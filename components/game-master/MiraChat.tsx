@@ -1,13 +1,10 @@
 "use client";
 
-// MIRA CHAT — ask the game master about the room (README §7-12).
+// MIRA CHAT — two paths (README §7-12):
 //
-// Lives in the SceneShell footer. Shows the "MIRA conviction" meter + an
-// "Ask MIRA" toggle. Opening it reveals a transcript panel where the player can
-// type a free-text question OR fire a quick "Request hint". Every message POSTs
-// /api/hint (which already accepts playerMessage), so the same guardrails apply:
-// the meter advances halfway to 100% each turn, hints escalate with it, and MIRA
-// NEVER unlocks anything or reveals a final room code.
+// 1. Request Hint  → /api/hint  (conviction meter, calibrated hint levels)
+// 2. Natural chat  → /api/chat  (direct answer to the player's question + room
+//    context; does NOT advance the meter; refuses exact-answer asks)
 //
 // The engine still validates answers — this panel only advises.
 
@@ -16,6 +13,7 @@ import { getCampaign } from "@/lib/campaigns";
 import { emit } from "@/lib/events";
 import { useGameStore } from "@/lib/store";
 import type { HintPuzzleContext, HintRequest, HintResponse } from "@/lib/hint";
+import type { ChatPuzzleContext, ChatRequest, ChatResponse } from "@/lib/mira-chat";
 
 type ChatTurn = {
   id: number;
@@ -64,12 +62,21 @@ export function MiraChat({
     setTurns((t) => [...t, { id: nextId.current++, role, text }]);
   }
 
-  async function send(playerMessage?: string) {
+  function baseProgress() {
+    return {
+      wrongAttempts,
+      hintsGiven,
+      timeRemainingSec,
+      secondsSinceMeaningfulProgress,
+      completedPuzzleIds,
+    };
+  }
+
+  /** Path 1 — conviction meter / calibrated hint. Advances the meter. */
+  async function requestHint() {
     if (loading) return;
-    const question = playerMessage?.trim();
     setLoading(true);
     emit("hint_request", { sceneId });
-    if (question) pushTurn("player", question);
 
     const puzzles: HintPuzzleContext[] = scene.puzzles.map((p) => ({
       id: p.id,
@@ -84,13 +91,8 @@ export function MiraChat({
       sceneTitle: scene.title,
       puzzles,
       requiredPuzzleIds: scene.requiredPuzzleIds,
-      completedPuzzleIds,
-      wrongAttempts,
-      hintsGiven,
-      timeRemainingSec,
-      secondsSinceMeaningfulProgress,
       priorConviction: conviction,
-      playerMessage: question || undefined,
+      ...baseProgress(),
     };
 
     try {
@@ -99,11 +101,60 @@ export function MiraChat({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(`MIRA request failed (${res.status})`);
+      if (!res.ok) throw new Error(`Hint request failed (${res.status})`);
       const data = (await res.json()) as HintResponse;
       setConviction(data.conviction);
       pushTurn("mira", data.hint);
       onHint?.(data.hint);
+    } catch {
+      const msg = "I lost the channel for a second — try that hint again.";
+      pushTurn("mira", msg);
+      onHint?.(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /** Path 2 — natural-language Q&A. Does NOT advance the meter. */
+  async function askQuestion(question: string) {
+    if (loading) return;
+    const message = question.trim();
+    if (!message) return;
+
+    setLoading(true);
+    // Chat is not a hint request — don't bump hintsGiven / conviction.
+    emit("mira_trigger", { sceneId, mode: "chat" });
+    pushTurn("player", message);
+
+    const puzzles: ChatPuzzleContext[] = scene.puzzles.map((p) => ({
+      id: p.id,
+      prompt: p.prompt,
+      category: p.category,
+      completed: completedPuzzleIds.includes(p.id),
+      required: scene.requiredPuzzleIds.includes(p.id),
+    }));
+
+    const body: ChatRequest = {
+      message,
+      campaignTitle: campaign.title,
+      sceneTitle: scene.title,
+      locationLabel: scene.locationLabel,
+      sceneIndex,
+      sceneCount: campaign.scenes.length,
+      puzzles,
+      ...baseProgress(),
+    };
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`Chat request failed (${res.status})`);
+      const data = (await res.json()) as ChatResponse;
+      pushTurn("mira", data.reply);
+      onHint?.(data.reply);
     } catch {
       const msg = "I lost the channel for a second — ask me again.";
       pushTurn("mira", msg);
@@ -118,7 +169,7 @@ export function MiraChat({
     const q = input.trim();
     if (!q || loading) return;
     setInput("");
-    void send(q);
+    void askQuestion(q);
   }
 
   const pct = Math.round(conviction);
@@ -158,9 +209,9 @@ export function MiraChat({
           >
             {turns.length === 0 && (
               <p className="text-[11px] leading-relaxed" style={{ color: "var(--dim)" }}>
-                Ask me anything about this room — what a terminal wants, where to
-                look, how to read a clue. I won&apos;t hand you the code, but I&apos;ll
-                point you at it.
+                Ask me about this room — what a terminal wants, where to look, how
+                a concept works. I won&apos;t hand you the answer. For a calibrated
+                nudge, use Request Hint.
               </p>
             )}
 
@@ -225,12 +276,12 @@ export function MiraChat({
           </form>
 
           <button
-            onClick={() => void send()}
+            onClick={() => void requestHint()}
             disabled={loading}
             className="border-t px-3 py-2 text-left text-[10px] disabled:opacity-50"
             style={{ borderColor: "var(--edge)", color: "var(--dim)" }}
           >
-            or just request a hint ▸
+            Request Hint ▸
           </button>
         </div>
       )}
