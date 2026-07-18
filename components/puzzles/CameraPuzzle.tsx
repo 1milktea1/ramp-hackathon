@@ -236,7 +236,7 @@ export function CameraPuzzle({
             matchSinceRef.current = null;
             setHoldProgress(0);
 
-            // Holding a clear wrong gesture ≥2s → Incorrect signal; stay open.
+            // Holding a clear wrong gesture ≥1s → Incorrect signal; stay open.
             const wrongComplete =
               altAnswer != null &&
               altAnswer !== target.answer &&
