@@ -19,7 +19,6 @@ import { validate } from "@/lib/validators";
 import "@/lib/validators.answers";
 
 const TOTAL_ROUNDS = 3;
-const ROUND_SECONDS = 60;
 const PUZZLE = NYC_MARKET_FINALE;
 
 type RoundResult = {
@@ -40,7 +39,7 @@ const VERDICT: Record<MarketResponse | "timeout", string> = {
   buy: "BUY — I lift your ask. My value sits above that ask.",
   sell: "SELL — I hit your bid. My value sits below that bid.",
   hold: "HOLD — no trade. Your market covers my value.",
-  timeout: "Clock hit zero. That round is dead — no print.",
+  timeout: "Round skipped.",
 };
 
 function toInt(raw: string): number | null {
@@ -74,7 +73,6 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
   const [diceState, setDiceState] = useState<DiceVisualState>("rolling");
   const [roll, setRoll] = useState<Roll | null>(null);
   const [round, setRound] = useState(1);
-  const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
   const [history, setHistory] = useState<RoundResult[]>([]);
   const [phase, setPhase] = useState<"markets" | "guess">("markets");
   const [busy, setBusy] = useState(false);
@@ -180,46 +178,9 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
         goToGuess();
         return r;
       }
-      setSecondsLeft(ROUND_SECONDS);
       return r + 1;
     });
   }, [goToGuess]);
-
-  const forfeitRound = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-    setHistory((h) => [
-      ...h,
-      { round, quantity: "sum", bid: 0, ask: 0, response: "timeout" },
-    ]);
-    emit("wrong_attempt", { puzzleId: PUZZLE.id, reason: "round_timeout" });
-    pushLog("think", "Round clock expired. No market to clear.");
-    miraSpeak(VERDICT.timeout, "critical");
-    await sleep(400);
-    setBusy(false);
-    advanceRound();
-  }, [busy, round, pushLog, miraSpeak, advanceRound]);
-
-  const forfeitRef = useRef(forfeitRound);
-  useEffect(() => {
-    forfeitRef.current = forfeitRound;
-  }, [forfeitRound]);
-
-  useEffect(() => {
-    if (phase !== "markets" || alreadySolved || busy || diceState === "rolling") {
-      return;
-    }
-    const id = window.setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          void forfeitRef.current();
-          return ROUND_SECONDS;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [phase, round, alreadySolved, busy, diceState]);
 
   async function narrateVerdict(
     quantity: Quantity,
@@ -341,8 +302,6 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
     pushLog("think", "Guess rejected by the exchange engine.");
   }
 
-  const criticalClock = secondsLeft <= 15;
-
   return (
     <div
       className="absolute inset-0 z-40 flex flex-col"
@@ -370,11 +329,10 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
         <div className="flex items-center gap-3">
           {phase === "markets" && (
             <div
-              className="tabular-nums text-lg font-bold tracking-widest"
-              style={{ color: criticalClock ? "var(--hot)" : "var(--txt)" }}
-              role="timer"
+              className="tabular-nums text-sm font-bold tracking-widest"
+              style={{ color: "var(--txt)" }}
             >
-              {secondsLeft}s · R{Math.min(round, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
+              R{Math.min(round, TOTAL_ROUNDS)}/{TOTAL_ROUNDS}
             </div>
           )}
           <button type="button" className="px-btn px-2 py-1 text-[10px]" onClick={onClose}>
