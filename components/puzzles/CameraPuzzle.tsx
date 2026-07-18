@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import type { PuzzleDefinition } from "@/lib/types";
 import {
   cameraTargetFor,
-  describeGesture,
   type CameraPuzzleTarget,
 } from "@/lib/camera-targets";
 import {
@@ -390,9 +389,6 @@ export function CameraPuzzle({
 
         <p className="mb-2 text-[12px]" style={{ color: "var(--txt)" }}>
           {target.instruction}
-        </p>
-        <p className="mb-1 text-[10px]" style={{ color: "var(--muted)" }}>
-          Required: {describeGesture(target.gesture)} · Detected: {status.detectedLabel}
         </p>
         <p className="mb-2 text-[10px]" style={{ color: "var(--muted)" }}>
           {framingMessage(status.framing)}
