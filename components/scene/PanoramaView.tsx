@@ -106,29 +106,16 @@ export function PanoramaView({
                   <button
                     onClick={() => onOpenPuzzle(puzzle)}
                     tabIndex={v === view ? 0 : -1}
+                    aria-label={hotspot.label}
                     // relative/z-10 is load-bearing: the art and backdrop layers
                     // are absolutely positioned, so a static button hides behind them.
-                    className="group relative z-10 grid place-items-center gap-2 border-2 px-6 py-5 backdrop-blur-[1px]"
-                    style={{
-                      borderColor: solved ? "var(--lit)" : "var(--accent)",
-                      borderStyle: solved ? "solid" : "dashed",
-                      background: "rgba(11,14,20,0.72)",
-                    }}
+                    className="group relative z-10 grid place-items-center bg-transparent p-0"
                   >
                     <DeviceSprite
                       sceneId={scene.id}
                       label={hotspot.label}
                       solved={solved}
                     />
-                    <span
-                      className="text-[9px] tracking-[0.22em]"
-                      style={{ color: solved ? "var(--lit)" : "var(--accent)" }}
-                    >
-                      {hotspot.label.toUpperCase()}
-                    </span>
-                    <span className="text-[10px]" style={{ color: "var(--dim)" }}>
-                      {solved ? "✓ RESOLVED" : "INTERACT"}
-                    </span>
                   </button>
                 )}
               </div>

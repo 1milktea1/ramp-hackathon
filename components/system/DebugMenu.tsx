@@ -17,7 +17,6 @@ export function DebugMenu() {
   const setSceneIndex = useGameStore((s) => s.setSceneIndex);
   const completePuzzle = useGameStore((s) => s.completePuzzle);
   const tickTimer = useGameStore((s) => s.tickTimer);
-  const addItem = useGameStore((s) => s.addItem);
   const setStatus = useGameStore((s) => s.setStatus);
   const reset = useGameStore((s) => s.reset);
 
