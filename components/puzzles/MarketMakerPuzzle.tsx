@@ -3,9 +3,9 @@
 // NYC QUANT FINALE — Market Maker dice game.
 //
 // The player quotes two-sided markets on the SUM and PRODUCT of 3 hidden dice
-// (one d7, two d10) across 3 timed rounds. The game master (engine) answers each
-// market with Buy / Sell / Hold. The player reads the feedback, then names all
-// three dice to win.
+// (two d6, one d10) across 3 timed rounds. The game master (engine) answers each
+// market with Buy / Sell / Hold. The player reads the feedback, then gets ONE
+// guess at the roll — a wrong guess loses the game.
 //
 // SEAM — UI teammate: this is logic-complete but visually plain. Restyle freely.
 // Do NOT move correctness out of the engine: the final guess always routes
@@ -58,14 +58,17 @@ function toInt(raw: string): number | null {
 
 export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
   const completePuzzle = useGameStore((s) => s.completePuzzle);
+  const setStatus = useGameStore((s) => s.setStatus);
   const solved = useGameStore((s) => s.completedPuzzleIds.includes(puzzle.id));
 
   const [round, setRound] = useState(1);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
   const [history, setHistory] = useState<RoundResult[]>([]);
-  const [phase, setPhase] = useState<"markets" | "guess">("markets");
+  const [phase, setPhase] = useState<"markets" | "guess" | "lost">("markets");
   const [error, setError] = useState<string | null>(null);
   const [guessError, setGuessError] = useState<string | null>(null);
+  // The real roll, captured on a losing guess so it can be revealed.
+  const [lostRoll, setLostRoll] = useState<Roll | null>(null);
 
   // Market inputs (strings so the fields can be empty while typing).
   const [sumBid, setSumBid] = useState("");
@@ -74,9 +77,9 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
   const [prodAsk, setProdAsk] = useState("");
 
   // Final guess inputs.
-  const [guessD7, setGuessD7] = useState("");
-  const [guessD10a, setGuessD10a] = useState("");
-  const [guessD10b, setGuessD10b] = useState("");
+  const [guessD6a, setGuessD6a] = useState("");
+  const [guessD6b, setGuessD6b] = useState("");
+  const [guessD10, setGuessD10] = useState("");
 
   // Roll the hidden dice once when the finale mounts; clear on unmount.
   useEffect(() => {
@@ -166,26 +169,31 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
   }
 
   function submitGuess() {
-    const d7 = toInt(guessD7);
-    const d10a = toInt(guessD10a);
-    const d10b = toInt(guessD10b);
-    if (d7 === null || d10a === null || d10b === null) {
+    const d6a = toInt(guessD6a);
+    const d6b = toInt(guessD6b);
+    const d10 = toInt(guessD10);
+    if (d6a === null || d6b === null || d10 === null) {
       setGuessError("Enter all three die values.");
       return;
     }
-    if (d7 < 1 || d7 > 7 || d10a < 1 || d10a > 10 || d10b < 1 || d10b > 10) {
-      setGuessError("d7 is 1-7 and each d10 is 1-10.");
+    if (d6a < 1 || d6a > 6 || d6b < 1 || d6b > 6 || d10 < 1 || d10 > 10) {
+      setGuessError("Each d6 is 1-6 and the d10 is 1-10.");
       return;
     }
 
+    // One guess only. Correct wins; anything else loses the game.
     emit("answer_submit", { puzzleId: puzzle.id, kind: "guess" });
-    if (validate(puzzle.validatorKey, { d7, d10a, d10b })) {
+    if (validate(puzzle.validatorKey, { d6a, d6b, d10 })) {
       completePuzzle(puzzle.id);
       emit("puzzle_complete", { puzzleId: puzzle.id });
       endSession();
     } else {
-      setGuessError("That is not the roll. Re-read the market feedback and try again.");
+      setLostRoll(getSession());
       emit("wrong_attempt", { puzzleId: puzzle.id });
+      setGuessError(null);
+      setPhase("lost");
+      setStatus("lost");
+      endSession();
     }
   }
 
@@ -201,6 +209,21 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
         <p className="text-sm font-medium text-emerald-400">
           Market cleared — you read the book correctly. The exchange reopens.
         </p>
+      </div>
+    );
+  }
+
+  if (phase === "lost") {
+    return (
+      <div className="rounded-lg border border-red-900/60 bg-red-950/20 p-4">
+        <p className="text-sm font-medium text-red-400">
+          Wrong call — the exchange stays locked. You only get one guess.
+        </p>
+        {lostRoll && (
+          <p className="mt-2 font-mono text-xs text-zinc-500">
+            The roll was d6={lostRoll.d6a} · d6={lostRoll.d6b} · d10={lostRoll.d10}.
+          </p>
+        )}
       </div>
     );
   }
@@ -234,14 +257,14 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
           </p>
 
           <MarketInputs
-            label="Sum market (dice range 3-27)"
+            label="Sum market (dice range 3-22)"
             bid={sumBid}
             ask={sumAsk}
             onBid={setSumBid}
             onAsk={setSumAsk}
           />
           <MarketInputs
-            label="Product market (dice range 1-700)"
+            label="Product market (dice range 1-360)"
             bid={prodBid}
             ask={prodAsk}
             onBid={setProdBid}
@@ -271,13 +294,16 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
       {phase === "guess" && (
         <div className="flex flex-col gap-3">
           <p className="text-xs text-zinc-500">
-            Name the roll. The d7 is 1-7; each d10 is 1-10. The two d10s can be in
+            Name the roll. Each d6 is 1-6; the d10 is 1-10. The two d6s can be in
             any order.
           </p>
+          <p className="text-xs font-medium text-amber-400">
+            You get one guess. A wrong answer loses the game.
+          </p>
           <div className="flex flex-wrap gap-3">
-            <GuessInput label="d7" value={guessD7} onChange={setGuessD7} />
-            <GuessInput label="d10" value={guessD10a} onChange={setGuessD10a} />
-            <GuessInput label="d10" value={guessD10b} onChange={setGuessD10b} />
+            <GuessInput label="d6" value={guessD6a} onChange={setGuessD6a} />
+            <GuessInput label="d6" value={guessD6b} onChange={setGuessD6b} />
+            <GuessInput label="d10" value={guessD10} onChange={setGuessD10} />
           </div>
           {guessError && <p className="text-xs text-red-400">{guessError}</p>}
           <div className="flex items-center gap-3">

@@ -1,21 +1,21 @@
 // MARKET MAKER DICE ENGINE (NYC quant finale)
 //
 // Pure game logic, no React. The player quotes two-sided markets on the sum and
-// product of 3 hidden dice (one 7-sided, two 10-sided). The game master answers
+// product of 3 hidden dice (two 6-sided, one 10-sided). The game master answers
 // each market with Buy / Sell / Hold using the standard market-making
-// convention. After gathering feedback the player must name all three dice.
+// convention. After gathering feedback the player gets ONE guess at the roll.
 //
 // Deterministic + testable: every function is pure except the client session
 // singleton at the bottom, which just holds the active roll so the deterministic
 // validator (never MIRA) can check the final guess.
 
 export type Roll = {
-  /** 7-sided die, 1-7. */
-  d7: number;
-  /** First 10-sided die, 1-10. */
-  d10a: number;
-  /** Second 10-sided die, 1-10. */
-  d10b: number;
+  /** First 6-sided die, 1-6. */
+  d6a: number;
+  /** Second 6-sided die, 1-6. */
+  d6b: number;
+  /** 10-sided die, 1-10. */
+  d10: number;
 };
 
 export type Quantity = "sum" | "product";
@@ -27,11 +27,11 @@ export type MarketQuote = {
 
 export type MarketResponse = "buy" | "sell" | "hold";
 
-/** A player's final deduction. The two d10s are unordered. */
+/** A player's final deduction. The two d6s are unordered. */
 export type DiceGuess = {
-  d7: number;
-  d10a: number;
-  d10b: number;
+  d6a: number;
+  d6b: number;
+  d10: number;
 };
 
 /** Inclusive integer die roll in [1, sides] using the supplied RNG. */
@@ -45,16 +45,16 @@ function rollDie(sides: number, rng: () => number): number {
  */
 export function rollDice(rng: () => number = Math.random): Roll {
   return {
-    d7: rollDie(7, rng),
-    d10a: rollDie(10, rng),
-    d10b: rollDie(10, rng),
+    d6a: rollDie(6, rng),
+    d6b: rollDie(6, rng),
+    d10: rollDie(10, rng),
   };
 }
 
 /** The true sum or product of a roll. */
 export function trueValue(roll: Roll, quantity: Quantity): number {
-  if (quantity === "sum") return roll.d7 + roll.d10a + roll.d10b;
-  return roll.d7 * roll.d10a * roll.d10b;
+  if (quantity === "sum") return roll.d6a + roll.d6b + roll.d10;
+  return roll.d6a * roll.d6b * roll.d10;
 }
 
 /**
@@ -87,8 +87,8 @@ export function isValidQuote(quote: MarketQuote): boolean {
 }
 
 /**
- * Check a final guess against the true roll. The d7 must match exactly; the two
- * d10 values are compared as an unordered pair so the player is never penalized
+ * Check a final guess against the true roll. The d10 must match exactly; the two
+ * d6 values are compared as an unordered pair so the player is never penalized
  * for guessing them in the "wrong" order.
  */
 export function checkGuess(
@@ -99,15 +99,15 @@ export function checkGuess(
   if (typeof guess !== "object" || guess === null) return false;
   const g = guess as Partial<DiceGuess>;
   if (
-    !Number.isInteger(g.d7) ||
-    !Number.isInteger(g.d10a) ||
-    !Number.isInteger(g.d10b)
+    !Number.isInteger(g.d6a) ||
+    !Number.isInteger(g.d6b) ||
+    !Number.isInteger(g.d10)
   ) {
     return false;
   }
-  if (g.d7 !== roll.d7) return false;
-  const guessPair = [g.d10a as number, g.d10b as number].sort((a, b) => a - b);
-  const rollPair = [roll.d10a, roll.d10b].sort((a, b) => a - b);
+  if (g.d10 !== roll.d10) return false;
+  const guessPair = [g.d6a as number, g.d6b as number].sort((a, b) => a - b);
+  const rollPair = [roll.d6a, roll.d6b].sort((a, b) => a - b);
   return guessPair[0] === rollPair[0] && guessPair[1] === rollPair[1];
 }
 
