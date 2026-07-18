@@ -6,7 +6,7 @@ export const NYC_MARKET_FINALE: PuzzleDefinition = {
   category: "probability",
   interaction: "numeric",
   prompt:
-    "The exchange is locked. Make markets on the sum and product of the sealed roll (two d6, one d10), read my Buy/Sell/Hold, then name all three dice in one guess to reopen trading.",
+    "The exchange is locked. Make markets on the sum and product of the sealed roll (two d6, one d10), read my Buy/Sell/Hold, then name all three dice to reopen trading. You get one guess.",
   validatorKey: "ny-finale-market",
   expectedDurationSec: 180,
   hints: {

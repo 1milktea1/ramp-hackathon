@@ -61,19 +61,21 @@ Work on **`erica`**. Prefer additive files. Push only when asked (owner preferen
 
 ---
 
-## 4. Market-maker game logic (UPDATED — match `main` @ `8a3b44e`)
+## 4. Market-maker game logic (parity with `main` @ `8a3b44e`)
 
-**Source of truth for engine:** `lib/market-game.ts` (synced from `main`).
+**Source of truth for engine:** `lib/market-game.ts` — **byte-identical to `origin/main`** as of this handoff.
 
 | Rule | Detail |
 |---|---|
-| Dice | **Two d6 (1–6) + one d10 (1–10)** — *not* d7+2d10 |
+| Dice | **Two d6 (1–6) + one d10 (1–10)** — sum range **3–22**, product **1–360** |
 | Quantities | Player quotes **sum** and **product** markets each round |
 | GM response | `evaluateMarket`: BUY if value > ask; SELL if value < bid; HOLD if inside |
-| Rounds | 3 market rounds, then guess (`MarketMakerFinale` — **no per-round timer** on erica) |
+| Rounds | 3 market rounds, then guess (`MarketMakerFinale` — **no per-round timer** on erica; main’s plain puzzle still has 60s) |
 | Guess | **One shot.** Correct → `completePuzzle` + `setStatus("won")`. Wrong → reveal roll + `setStatus("lost")` |
 | Guess shape | `{ d6a, d6b, d10 }` — d10 exact; two d6s unordered pair |
 | Session | `startSession` / `getSession` / `endSession` module singleton |
+
+**Also on `main` (not yet wired into `erica` campaign):** `lib/bayesian-ticker.ts` + `BayesianTickerPuzzle` — separate quant mini-game (hidden card 2–10, news wires, tightening quote widths, one card guess). Do not confuse with the dice market-maker.
 
 **UI entry points**
 - In-campaign: NYC stage 3 center desk → `MarketMakerFinale`

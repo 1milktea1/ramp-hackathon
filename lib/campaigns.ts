@@ -317,7 +317,7 @@ const NY_STAGE_3: QuestionSeed[] = [
     view: "center",
     device: "Exchange Desk",
     prompt:
-      "The exchange is locked. Make markets on the sum and product of the sealed roll (two d6, one d10), read my Buy/Sell/Hold, then name all three dice in one guess to reopen trading.",
+      "The exchange is locked. Make markets on the sum and product of the sealed roll (two d6, one d10), read my Buy/Sell/Hold, then name all three dice to reopen trading. You get one guess.",
     answerText: "the sealed dice",
     l1: "Buy means my value is above your ask; Sell means it is below your bid.",
     l2: "Quote a tight market (bid = ask). A HOLD there confirms the exact value. One wrong final guess loses.",

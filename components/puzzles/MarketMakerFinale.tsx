@@ -407,14 +407,14 @@ export function MarketMakerFinale({ onClose }: MarketMakerFinaleProps) {
             {phase === "markets" && (
               <div className="flex flex-col gap-3">
                 <MarketInputs
-                  label="SUM market (bid @ ask)"
+                  label="SUM market (dice range 3–22)"
                   bid={sumBid}
                   ask={sumAsk}
                   onBid={setSumBid}
                   onAsk={setSumAsk}
                 />
                 <MarketInputs
-                  label="PRODUCT market (bid @ ask)"
+                  label="PRODUCT market (dice range 1–360)"
                   bid={prodBid}
                   ask={prodAsk}
                   onBid={setProdBid}
