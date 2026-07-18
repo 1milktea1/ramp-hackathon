@@ -113,22 +113,6 @@ export function DebugMenu() {
         <button
           type="button"
           className="px-btn px-2 py-1.5 text-[10px]"
-          onClick={() => addItem("debug-access-card")}
-        >
-          Grant item
-        </button>
-        <button
-          type="button"
-          className="px-btn px-2 py-1.5 text-[10px]"
-          onClick={() =>
-            emit("mira_trigger", { reason: "debug_menu", sceneId: scene?.id })
-          }
-        >
-          Trigger MIRA
-        </button>
-        <button
-          type="button"
-          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() => setStatus("won")}
         >
           Force win
