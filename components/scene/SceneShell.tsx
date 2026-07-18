@@ -1,20 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CampaignDefinition, PuzzleDefinition } from "@/lib/types";
-import { VIEW_ORDER } from "@/lib/campaigns";
+import { VIEW_ORDER, puzzleForView } from "@/lib/campaigns";
 import { isStageSolved, stageHint } from "@/lib/progress";
+import { buildResponse, computePressure } from "@/lib/mira";
 import { useGameStore } from "@/lib/store";
 import { emit } from "@/lib/events";
 import { PanoramaView } from "./PanoramaView";
 import { NavigationArrows } from "./NavigationArrows";
+import { FinaleRoom } from "./FinaleRoom";
 import { TopBar } from "../system/TopBar";
 import { DigitTray } from "../system/DigitTray";
 import { MiraCaption } from "../game-master/MiraCaption";
+import { MiraChat } from "../game-master/MiraChat";
 import { PuzzleModal } from "../puzzles/PuzzleModal";
-import { FinalePanel } from "../campaign/FinalePanel";
 import { MarketMakerFinale } from "../puzzles/MarketMakerFinale";
 
+/** Pressure above this, with a cooldown elapsed, triggers an unsolicited nudge. */
+const NUDGE_PRESSURE = 0.45;
+const NUDGE_COOLDOWN_SEC = 45;
+
+/** NYC stage 3 is a single market-making desk, not a numeric terminal. */
 function isMarketPuzzle(puzzle: PuzzleDefinition | null): boolean {
   return puzzle?.validatorKey === "ny-finale-market";
 }
@@ -34,11 +41,17 @@ export function SceneShell({
   const completePuzzle = useGameStore((s) => s.completePuzzle);
   const timeRemainingSec = useGameStore((s) => s.timeRemainingSec);
   const tickTimer = useGameStore((s) => s.tickTimer);
+  const wrongAttempts = useGameStore((s) => s.wrongAttempts);
+  const idleSec = useGameStore((s) => s.secondsSinceMeaningfulProgress);
   const status = useGameStore((s) => s.status);
+  const setStatus = useGameStore((s) => s.setStatus);
 
   const [openPuzzle, setOpenPuzzle] = useState<PuzzleDefinition | null>(null);
   const [caption, setCaption] = useState<string | null>(null);
-  const [finaleOpen, setFinaleOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [inFinale, setInFinale] = useState(false);
+  const [sceneElapsed, setSceneElapsed] = useState(0);
+  const lastNudgeRef = useRef(0);
 
   const scene = campaign.scenes[sceneIndex];
   const viewIndex = VIEW_ORDER.indexOf(view);
@@ -46,29 +59,57 @@ export function SceneShell({
   const isLastScene = sceneIndex === campaign.scenes.length - 1;
   const isNyc = campaign.id === "new-york-quant";
   const marketOpen = isMarketPuzzle(openPuzzle);
+  const isMarketScene =
+    scene.requiredPuzzleIds.length === 1 && isMarketPuzzle(scene.puzzles[0]);
+  const activePuzzle = openPuzzle ?? puzzleForView(scene, view);
+
+  const pressure = useMemo(
+    () =>
+      computePressure({
+        secondsSinceMeaningfulProgress: idleSec,
+        wrongAttempts,
+        timeRemainingSec,
+        totalCampaignSec: campaign.durationSec,
+        sceneElapsedSec: sceneElapsed,
+        expectedSceneDurationSec: scene.expectedDurationSec,
+      }),
+    [idleSec, wrongAttempts, timeRemainingSec, campaign.durationSec, sceneElapsed, scene.expectedDurationSec]
+  );
 
   // --- Timer -------------------------------------------------
   useEffect(() => {
     if (status !== "playing") return;
-    const id = window.setInterval(() => tickTimer(1), 1000);
+    const id = window.setInterval(() => {
+      tickTimer(1);
+      setSceneElapsed((n) => n + 1);
+    }, 1000);
     return () => window.clearInterval(id);
   }, [status, tickTimer]);
 
   // --- Scene entry -------------------------------------------
-  useEffect(() => {
-    emit("scene_enter", { sceneId: scene.id });
-    if (scene.requiredPuzzleIds.length === 1 && isMarketPuzzle(scene.puzzles[0])) {
-      setCaption(
-        `${scene.title}. Face center and activate the Exchange Desk — MIRA is waiting on the other side of the book.`
-      );
-      // Land on the only interactive wall.
-      setView("center");
-    } else {
-      setCaption(`${scene.title}. Three terminals here — turn to find them all.`);
-    }
-  }, [scene.id, scene.title, scene.requiredPuzzleIds.length, scene.puzzles, setView]);
+  // Scene-scoped state resets during render rather than in an effect, so
+  // changing location does not cause a second pass with stale values.
+  const [prevSceneId, setPrevSceneId] = useState(scene.id);
+  if (prevSceneId !== scene.id) {
+    setPrevSceneId(scene.id);
+    setSceneElapsed(0);
+    setInFinale(false);
+    setCaption(
+      isMarketScene
+        ? `${scene.title}. Face centre and activate the Exchange Desk — MIRA is waiting on the other side of the book.`
+        : `${scene.title}. Three terminals here — turn to find them all.`
+    );
+  }
 
-  // DebugMenu: jump to NYC stage 3 and open the center market panel.
+  // Telemetry, the nudge cooldown and the view reset are side effects.
+  useEffect(() => {
+    lastNudgeRef.current = 0;
+    emit("scene_enter", { sceneId: scene.id });
+    // The market desk is the only interactive wall — land facing it.
+    if (isMarketScene) setView("center");
+  }, [scene.id, isMarketScene, setView]);
+
+  // DebugMenu: jump to NYC stage 3 and open the centre market panel.
   useEffect(() => {
     if (!isNyc) return;
     const open = () => {
@@ -88,6 +129,18 @@ export function SceneShell({
     return () => window.removeEventListener("debug-open-nyc-finale", open);
   }, [isNyc, campaign, setSceneIndex, setView]);
 
+  // --- Unsolicited nudges (local telemetry only, never the model) ---
+  useEffect(() => {
+    if (status !== "playing" || openPuzzle || inFinale) return;
+    if (pressure < NUDGE_PRESSURE) return;
+    if (sceneElapsed - lastNudgeRef.current < NUDGE_COOLDOWN_SEC) return;
+
+    lastNudgeRef.current = sceneElapsed;
+    const reply = buildResponse({ puzzle: activePuzzle, pressure, seed: sceneElapsed });
+    emit("mira_trigger", { pressure, hintLevel: reply.hintLevel });
+    setCaption(reply.message);
+  }, [pressure, sceneElapsed, status, openPuzzle, inFinale, activePuzzle]);
+
   const rotate = useCallback(
     (delta: number) => {
       const next = viewIndex + delta;
@@ -97,16 +150,18 @@ export function SceneShell({
     [viewIndex, setView]
   );
 
-  // Suspend panorama keys while any panel owns the keyboard.
+  // Panorama rotation is suspended whenever a puzzle, the chat or the finale
+  // owns the keyboard — otherwise typing an answer would also spin the room.
   useEffect(() => {
-    if (openPuzzle || finaleOpen) return;
+    if (openPuzzle || chatOpen || inFinale) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") rotate(-1);
       if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") rotate(1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openPuzzle, finaleOpen, rotate]);
+  }, [openPuzzle, chatOpen, inFinale, rotate]);
 
   function handleSolved(puzzleId: string) {
     completePuzzle(puzzleId);
@@ -114,27 +169,46 @@ export function SceneShell({
 
     const nowComplete = [...completedPuzzleIds, puzzleId];
     if (isStageSolved(scene, nowComplete)) {
-      const endLine = isLastScene
-        ? "That completes the code."
-        : "Moving to the next location.";
       setCaption(
-        `Stage clear. Recovered digit: ${stageHint(scene)}. ${endLine}`
+        `Stage clear. Recovered digit: ${stageHint(scene)}. ${
+          isLastScene ? "That completes the code." : "Route open to the next location."
+        }`
       );
     } else {
-      const remaining =
-        scene.requiredPuzzleIds.length -
-        nowComplete.filter((id) => scene.requiredPuzzleIds.includes(id)).length;
-      setCaption(
-        remaining === 1
-          ? "Logged. One terminal left on this floor."
-          : "Logged. Two more terminals on this floor."
-      );
+      const left = scene.requiredPuzzleIds.filter((id) => !nowComplete.includes(id)).length;
+      setCaption(`Logged. ${left} more terminal${left === 1 ? "" : "s"} on this floor.`);
     }
   }
 
-  function advance() {
-    if (isLastScene) return;
-    setSceneIndex(sceneIndex + 1);
+  function requestHint() {
+    emit("hint_request", { via: "button", sceneId: scene.id });
+    const reply = buildResponse({
+      puzzle: activePuzzle,
+      pressure,
+      explicitRequest: true,
+      seed: sceneElapsed,
+    });
+    setCaption(reply.message);
+  }
+
+  // SF ends in the full-screen lock room. NYC wins inside the market panel.
+  if (inFinale && !isNyc) {
+    return (
+      <div className="flex h-full flex-col" data-campaign={campaign.id}>
+        <TopBar
+          campaign={campaign}
+          scene={scene}
+          sceneIndex={sceneIndex}
+          timeRemainingSec={timeRemainingSec}
+          onExit={onExit}
+        />
+        <FinaleRoom
+          campaign={campaign}
+          onWin={() => setStatus("won")}
+          onBack={() => setInFinale(false)}
+        />
+      </div>
+    );
   }
 
   return (
@@ -168,6 +242,13 @@ export function SceneShell({
 
         <MiraCaption message={caption} onDismiss={() => setCaption(null)} />
 
+        <MiraChat
+          puzzle={activePuzzle}
+          pressure={pressure}
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+        />
+
         {marketOpen && openPuzzle && (
           <MarketMakerFinale onClose={() => setOpenPuzzle(null)} />
         )}
@@ -177,13 +258,6 @@ export function SceneShell({
             puzzle={openPuzzle}
             onSolved={handleSolved}
             onClose={() => setOpenPuzzle(null)}
-          />
-        )}
-
-        {finaleOpen && !isNyc && (
-          <FinalePanel
-            campaignId={campaign.id}
-            onClose={() => setFinaleOpen(false)}
           />
         )}
       </div>
@@ -200,23 +274,25 @@ export function SceneShell({
 
         <div className="flex gap-2">
           {stageSolved && !isLastScene && (
-            <button onClick={advance} className="px-btn px-3 py-2 text-[10px]">
+            <button
+              onClick={() => setSceneIndex(sceneIndex + 1)}
+              className="px-btn px-3 py-2 text-[10px]"
+              style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+            >
               Next location ▶
             </button>
           )}
-          {/* SF only: digit-code lock. NYC wins inside the market panel. */}
+          {/* SF only: the digit-code lock. NYC wins inside the market panel. */}
           {stageSolved && isLastScene && !isNyc && (
             <button
-              onClick={() => setFinaleOpen(true)}
+              onClick={() => setInFinale(true)}
               className="px-btn px-3 py-2 text-[10px]"
+              style={{ borderColor: "var(--lit)", color: "var(--lit)" }}
             >
-              Enter final code ▶
+              Enter the lock ▶
             </button>
           )}
-          <button
-            onClick={() => emit("hint_request", { sceneId: scene.id })}
-            className="px-btn px-3 py-2 text-[10px]"
-          >
+          <button onClick={requestHint} className="px-btn px-3 py-2 text-[10px]">
             Request hint
           </button>
         </div>

@@ -342,8 +342,8 @@ export const SAN_FRANCISCO: CampaignDefinition = {
   },
   scenes: [
     toScene("sf-1", "SoMa Transit Stop", "SoMa · San Francisco", "/bg/sf-1.png", SF_STAGE_1, "sf-2"),
-    toScene("sf-2", "Cursor Development Floor", "Mission · San Francisco", "/bg/sf-2.png", SF_STAGE_2, "sf-3"),
-    toScene("sf-3", "OpenAI Mission Bay Node", "Mission Bay · San Francisco", "/bg/sf-3.png", SF_STAGE_3),
+    toScene("sf-2", "Cursor Development Floor", "Mission · San Francisco", "/bg/sf-2.jpeg", SF_STAGE_2, "sf-3"),
+    toScene("sf-3", "OpenAI Mission Bay Node", "Mission Bay · San Francisco", "/bg/sf-3.jpeg", SF_STAGE_3),
   ],
 };
 
@@ -361,13 +361,14 @@ export const NEW_YORK: CampaignDefinition = {
     physical: 0.15,
   },
   scenes: [
-    toScene("ny-1", "23rd Street Subway", "Flatiron · Manhattan", "/bg/ny-1.png", NY_STAGE_1, "ny-2"),
-    toScene("ny-2", "Ramp Headquarters", "West 23rd St · Manhattan", "/bg/ny-2.png", NY_STAGE_2, "ny-3"),
+    toScene("ny-1", "23rd Street Subway", "Flatiron · Manhattan", "/bg/ny-1.jpeg", NY_STAGE_1, "ny-2"),
+    toScene("ny-2", "Ramp Headquarters", "West 23rd St · Manhattan", "/bg/ny-2.jpeg", NY_STAGE_2, "ny-3"),
+    // Stage 3 is the market-maker desk, so it is named for the exchange.
     toScene(
       "ny-3",
       "Lower Manhattan Exchange",
       "Exchange · Manhattan",
-      "/bg/ny-3.png",
+      "/bg/ny-3.jpeg",
       NY_STAGE_3
     ),
   ],
@@ -396,3 +397,36 @@ export function puzzleForView(
 
 /** Ordered [left, center, right] views — the Q1/Q2/Q3 progression. */
 export const VIEW_ORDER = VIEWS;
+
+/**
+ * Art for the finale room. CampaignDefinition is frozen and has no field for
+ * it, so the path is derived by convention rather than stored.
+ */
+export function finaleBackground(campaignId: CampaignId): string {
+  return campaignId === "san-francisco-swe"
+    ? "/bg/sf-finale.jpeg"
+    : "/bg/ny-finale.jpeg";
+}
+
+// --- Visual aids --------------------------------------------
+//
+// PuzzleDefinition is frozen, so aids are looked up by puzzle id rather than
+// carried as a field. A question with no entry renders as text — aids are
+// additive and never required to solve anything.
+
+export type AidSpec =
+  | { kind: "dice" }
+  | { kind: "bays"; values: number[]; range: number }
+  | { kind: "ring"; n: number }
+  | { kind: "bars"; values: number[]; prefix?: string };
+
+export const AIDS: Record<string, AidSpec> = {
+  // 36 outcomes made concrete; counting the sevens is still the player's job.
+  ny_two_dice_sum7: { kind: "dice" },
+  // Six bays, five reported — the gap is visible, its value is not labelled.
+  sf_missing_number: { kind: "bays", values: [0, 1, 2, 4, 5], range: 6 },
+  // Click two traders to shake. A pair already shaken will not redraw.
+  ny_handshakes: { kind: "ring", n: 6 },
+  sf_best_time_stock: { kind: "bars", values: [7, 1, 5, 3, 6], prefix: "$" },
+  sf_max_subarray: { kind: "bars", values: [-2, 4, -1, 3, -2, 2] },
+};

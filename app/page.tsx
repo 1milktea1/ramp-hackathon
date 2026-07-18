@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CampaignResults } from "@/components/campaign/CampaignResults";
 import { SceneShell } from "@/components/scene/SceneShell";
+import { ResultsScreen } from "@/components/system/ResultsScreen";
 import { DebugMenu } from "@/components/system/DebugMenu";
 import { CAMPAIGN_LIST, getCampaign } from "@/lib/campaigns";
 import { useGameStore } from "@/lib/store";
@@ -16,13 +16,16 @@ export default function Home() {
   const reset = useGameStore((s) => s.reset);
   const [hovered, setHovered] = useState<CampaignId | null>(null);
 
-  if (status === "won" || status === "lost") {
+  // Won or lost — the timer sets "lost" itself, so this also catches expiry.
+  if (campaignId && (status === "won" || status === "lost")) {
+    const campaign = getCampaign(campaignId);
     return (
       <>
-        <CampaignResults
-          status={status}
-          campaignId={campaignId}
-          onRestart={reset}
+        <ResultsScreen
+          campaign={campaign}
+          won={status === "won"}
+          onRestart={() => selectCampaign(campaign.id, campaign.durationSec)}
+          onExit={reset}
         />
         <DebugMenu />
       </>

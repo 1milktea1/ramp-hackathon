@@ -141,6 +141,21 @@ export function DebugMenu() {
         >
           Full reset
         </button>
+        {/* One-click full solve so the finale is reachable without playing
+            every stage during a demo rehearsal. */}
+        <button
+          type="button"
+          className="px-btn col-span-2 px-2 py-1.5 text-[10px]"
+          onClick={() => {
+            if (!campaign) return;
+            for (const sc of campaign.scenes) {
+              for (const id of sc.requiredPuzzleIds) completePuzzle(id);
+            }
+          }}
+          disabled={!campaign}
+        >
+          Solve all stages
+        </button>
         {campaignId === "new-york-quant" ? (
           <button
             type="button"
