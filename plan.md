@@ -94,18 +94,18 @@ Non-question elements are unchanged and sit **alongside**, not instead of, the 3
 
 | Stage | Q | Diff | Bank ID | Category / Interaction | Prompt | Answer | Hint digit |
 |---|---|---|---|---|---|---|---|
-| 1 | Q1 | **E1** | `sf_two_sum` | `array` / `numeric` | Terminal `[2,7,11,15]`, target sum `9` → enter the sum of the two indices that work (0 + 1) | `1` | `1` |
-| 1 | Q2 | **E1** | `sf_missing_number` | `array` / `numeric` | Sequence board `[0,1,2,4,5]` → enter the missing value | `3` | `3` |
-| 1 | Q3 | **E1** | `sf_contains_dup` | `array` / `numeric` | Board `[4,1,9,6,1]` → enter the duplicated ID | `1` | `1` |
-| **1** | | | | | **Stage 1 Hint** = ones digit of (1+3+1) | | **`5`** |
-| 2 | Q1 | **E1** | `sf_best_time_stock` | `math` / `numeric` | Ramp ticker `[7,1,5,3,6]` → enter the max possible gain | `5` | `5` |
-| 2 | Q2 | **E2** | `sf_unique_path_count` | `dynamic_programming` / `grid_traversal` | Robot moves through an `m x n` grid, only moving right or down → compute the number of unique paths from top-left to bottom-right | `28` | `8` |
-| 2 | Q3 | **E2** | `sf_valid_parens` | `logic` / `numeric` | Log string `( ( ) ( ) )` → enter `1` if balanced, else the 0-based index of the first break | `1` | `1` |
-| **2** | | | | | **Stage 2 Hint** = ones digit of (5+8+1=14) | | **`4`** |
-| 3 | Q1 | **E2** | `sf_binary_search` | `logic` / `numeric` | Sorted list `[3,9,14,22,31,40]` → enter the 0-based index of `22` | `3` | `3` |
-| 3 | Q2 | **M1** | `sf_max_subarray` | `array` / `numeric` | Load deltas `[-2,4,-1,3,-2,2]` → enter the largest contiguous sum | `6` | `6` |
-| 3 | Q3 | **M1** | `sf_product_except_self` | `array` / `numeric` | Array `[2,3,4]` → enter the value replacing index 1 (product of the other two) | `8` | `8` |
-| **3** | | | | | **Stage 3 Hint** = ones digit of (3+6+8=17) | | **`7`** |
+| 1 | Q1 | **E1** | `sf_two_sum` | `array` / `numeric` | The terminal displays a security code list `[2,7,11,15]`. The system unlocks only if you find the sum of the two positions whose values add up to the target `9`. Enter the index sum. | `1` | `1` |
+| 1 | Q2 | **E1** | `sf_missing_number` | `array` / `numeric` | A damaged access log shows the sequence `[0,1,2,4,5]`. One ID is missing from the sequence. Recover the missing value. | `3` | `3` |
+| 1 | Q3 | **E1** | `sf_contains_dup` | `array` / `numeric` | The trading floor scanner recorded IDs `[4,1,9,6,1]`. One ID was accidentally duplicated. Identify the repeated ID. | `1` | `1` |
+| **1** | | | | | **Stage 1 Hint = ones digit of (1+3+1)** | | **`5`** |
+| 2 | Q1 | **E1** | `sf_best_time_stock` | `math` / `numeric` | The market terminal displays stock prices `[7,1,5,3,6]` over several days. Find the maximum profit possible by choosing the best time to buy and sell once. | `5` | `5` |
+| 2 | Q2 | **E2** | `sf_unique_path_count` | `dynamic_programming` / `grid_traversal` | A courier robot must cross a `3 × 7` city grid to deliver a package. It can only travel right or down. Calculate the number of unique routes from the start point to the destination. | `28` | `8` |
+| 2 | Q3 | **E2** | `sf_valid_parens` | `logic` / `numeric` | A vault door uses the bracket pattern `(()())` as its authentication sequence. Enter `1` if the pattern is valid; otherwise enter the index of the first invalid symbol. | `1` | `1` |
+| **2** | | | | | **Stage 2 Hint = ones digit of (5+8+1=14)** | | **`4`** |
+| 3 | Q1 | **E2** | `sf_binary_search` | `logic` / `numeric` | The archive terminal stores sorted access keys `[3,9,14,22,31,40]`. Locate the key `22` and enter its 0-based position. | `3` | `3` |
+| 3 | Q2 | **M1** | `sf_max_subarray` | `array` / `numeric` | A server records network load changes `[-2,4,-1,3,-2,2]`. Find the largest continuous period of positive gain. Enter the maximum total change. | `6` | `6` |
+| 3 | Q3 | **M1** | `sf_product_except_self` | `array` / `numeric` | A machine analyzes the array `[2,3,4]`. Replace the value at index `1` with the product of all other values. Enter the new value. | `8` | `8` |
+| **3** | | | | | **Stage 3 Hint = ones digit of (3+6+8=17)** | | **`7`** |
 
 **Final SF code:** Stage1 ‖ Stage2 ‖ Stage3 = `5` `4` `7` → **`547`**
 
@@ -115,18 +115,18 @@ Camera open-palm verification gates the door into the Bay Control Center room af
 
 | Stage | Q | Diff | Bank ID | Category / Interaction | Prompt | Answer | Hint digit |
 |---|---|---|---|---|---|---|---|
-| 1 | Q1 | **E1** | `ny_two_dice_sum7` | `probability` / `numeric` | Two dice, 36 outcomes → enter how many sum to `7` | `6` | `6` |
-| 1 | Q2 | **E1** | `ny_card_ace` | `probability` / `numeric` | 52-card deck → enter the denominator of "1 in ___" odds of an Ace | `13` | `3` |
-| 1 | Q3 | **E1** | `ny_handshakes` | `math` / `numeric` | 6 traders each shake every other trader's hand once → enter total handshakes | `15` | `5` |
-| **1** | | | | | **Stage 1 Hint** = ones digit of (6+3+5) | | **`4`** |
-| 2 | Q1 | **E1** | `ny_coin_flip_ev` | `probability` / `numeric` | Fair coin flipped until HEAD → enter expected number of flips | `2` | `2` |
-| 2 | Q2 | **E2** | `ny_balls_no_replace` | `probability` / `numeric` | Bin `5 blue, 3 red`, draw 2 without replacement → enter numerator of P(both red) over denominator 28 | `3` | `3` |
-| 2 | Q3 | **E2** | `ny_monty_reveal` | `logic` / `object_selection` | 3 doors, one wrong door opens → `SWITCH` or `STAY`? | `SWITCH` | `1` (SWITCH=1, STAY=0) |
-| **2** | | | | | **Stage 2 Hint** = ones digit of (2+3+1) | | **`6`** |
-| 3 | Q1 | **E2** | `ny_locker_doors` | `logic` / `numeric` | 20 doors, pass `k` toggles multiples of `k` for `k=1..20` → enter how many end open | `4` | `4` |
-| 3 | Q2 | **M1** | `ny_bayes_coin` | `probability` / `numeric` | Vault: 2 fair coins + 1 two-headed; draw random coin, flip HEADS → enter % chance it's the two-headed coin | `50` | `0` |
-| 3 | Q3 | **M1** | `ny_weighted_ev` | `probability` / `numeric` | Trade returns `+$12` (25%), `+$2` (50%), `−$4` (25%) → enter the expected value | `3` | `3` |
-| **3** | | | | | **Stage 3 Hint** = ones digit of (4+0+3) | | **`7`** |
+| 1 | Q1 | **E1** | `ny_two_dice_sum7` | `probability` / `numeric` | The trading vault requires a dice verification code. Two dice are rolled, creating 36 possible outcomes. Count how many outcomes produce a total of exactly `7`. | `6` | `6` |
+| 1 | Q2 | **E1** | `ny_card_ace` | `probability` / `numeric` | A security analyst checks a standard 52-card deck. The odds of drawing an Ace are written as "1 in ___". Determine the missing number. | `13` | `3` |
+| 1 | Q3 | **E1** | `ny_handshakes` | `math` / `numeric` | Six traders meet before the market opens. Each trader shakes hands with every other trader exactly once. Calculate the total number of handshakes. | `15` | `5` |
+| **1** | | | | | **Stage 1 Hint = ones digit of (6+3+5)** | | **`4`** |
+| 2 | Q1 | **E1** | `ny_coin_flip_ev` | `probability` / `numeric` | A random security system flips a fair coin repeatedly until the first HEAD appears. Determine the expected number of flips needed to unlock the system. | `2` | `2` |
+| 2 | Q2 | **E2** | `ny_balls_no_replace` | `probability` / `numeric` | A market analyst inspects a bin containing 5 blue tokens and 3 red tokens. Two tokens are drawn without replacement. Find the numerator of the probability that both selected tokens are red (the denominator is 28). | `3` | `3` |
+| 2 | Q3 | **E2** | `ny_monty_reveal` | `logic` / `object_selection` | A game host presents three vault doors, with only one containing the prize. After you choose a door, the host opens a losing door. Decide whether the optimal strategy is to SWITCH doors or STAY with your original choice. | `SWITCH` | `1` |
+| **2** | | | | | **Stage 2 Hint = ones digit of (2+3+1)** | | **`6`** |
+| 3 | Q1 | **E2** | `ny_locker_doors` | `logic` / `numeric` | The final security chamber contains 20 locked doors. For each round `k = 1` through `20`, the system toggles every door whose number is a multiple of `k`. After all rounds finish, determine how many doors remain open. | `4` | `4` |
+| 3 | Q2 | **M1** | `ny_bayes_coin` | `probability` / `numeric` | A vault contains two normal coins and one double-headed coin. A random coin is selected and flipped once, resulting in HEADS. Calculate the percentage chance that the chosen coin was the double-headed coin. | `50` | `0` |
+| 3 | Q3 | **M1** | `ny_weighted_ev` | `probability` / `numeric` | A trader evaluates a new strategy with possible returns: +$12 with 25% probability, +$2 with 50% probability, and −$4 with 25% probability. Calculate the expected value of the trade. | `3` | `3` |
+| **3** | | | | | **Stage 3 Hint = ones digit of (4+0+3)** | | **`7`** |
 
 **Final NYC code:** Stage1 ‖ Stage2 ‖ Stage3 = `4` `6` `7` → **`467`**
 
