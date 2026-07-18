@@ -1,10 +1,10 @@
 # Exit Code: Citywide
 
-*A browser-based escape room that turns real SWE/quant interview prep into a 12-minute cinematic puzzle game, watched over by an AI Game Master — built for the Ramp hackathon.*
+*A browser-based escape room that turns real SWE/quant interview prep into a 12-minute cinematic puzzle game, watched over by an AI Game Master.*
 
-https://ramp-hackathon-theta.vercel.app/
+**https://ramp-hackathon-theta.vercel.app/
 
-Press "Shift + D" to activate admin panel, allowing you to skip puzzles, scenes, etc. 
+Press "Shift + D" to activate admin panel, allowing you to skip puzzles, scenes, etc. **
 
 ## Motivation, intention & differentiation
 
