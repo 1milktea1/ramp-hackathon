@@ -105,7 +105,7 @@ const SF_STAGE_1: QuestionSeed[] = [
     view: "left",
     device: "Arrivals Terminal",
     prompt:
-      "Manifest [2, 7, 11, 15]. Target sum 9. Enter the SUM OF THE TWO INDICES that reach it.",
+      "The terminal displays a security code list [2, 7, 11, 15]. The system unlocks only if you find the sum of the two positions whose values add up to the target 9. Enter the index sum.",
     answerText: "1",
     l1: "Two entries in that manifest add to 9. Find them first.",
     l2: "It asks for their positions, not their values — and positions start at 0.",
@@ -117,7 +117,8 @@ const SF_STAGE_1: QuestionSeed[] = [
     interaction: "numeric",
     view: "center",
     device: "Bay Board",
-    prompt: "Bays reporting: [0, 1, 2, 4, 5]. One never checked in. Enter the missing value.",
+    prompt:
+      "A damaged access log shows the sequence [0, 1, 2, 4, 5]. One ID is missing from the sequence. Recover the missing value.",
     aid: "bay-strip",
     answerText: "3",
     l1: "The board should run without a gap. Read it in order.",
@@ -130,7 +131,8 @@ const SF_STAGE_1: QuestionSeed[] = [
     interaction: "numeric",
     view: "right",
     device: "Maintenance Panel",
-    prompt: "Blade IDs: [4, 1, 9, 6, 1]. One ID was issued twice. Enter the duplicated ID.",
+    prompt:
+      "The trading floor scanner recorded IDs [4, 1, 9, 6, 1]. One ID was accidentally duplicated. Identify the repeated ID.",
     answerText: "1",
     l1: "One of those five IDs appears more than once.",
     l2: "Scan for the value you read twice, then enter that value.",
@@ -229,7 +231,8 @@ const NY_STAGE_1: QuestionSeed[] = [
     interaction: "numeric",
     view: "left",
     device: "Odds Board",
-    prompt: "Two dice, 36 equally likely outcomes. Enter how many of them sum to 7.",
+    prompt:
+      "The trading vault requires a dice verification code. Two dice are rolled, creating 36 possible outcomes. Count how many outcomes produce a total of exactly 7.",
     aid: "dice-grid",
     answerText: "6",
     l1: "Lay the 36 outcomes out as a 6 by 6 grid.",
@@ -242,7 +245,8 @@ const NY_STAGE_1: QuestionSeed[] = [
     interaction: "numeric",
     view: "center",
     device: "Token Booth",
-    prompt: "A 52-card deck holds 4 Aces. Odds of drawing one are 1 in ___. Enter the denominator.",
+    prompt:
+      'A security analyst checks a standard 52-card deck. The odds of drawing an Ace are written as "1 in ___". Determine the missing number.',
     answerText: "13",
     l1: "Four favourable cards out of fifty-two.",
     l2: "Reduce 4/52 until the numerator is 1, then read the denominator.",
@@ -254,7 +258,8 @@ const NY_STAGE_1: QuestionSeed[] = [
     interaction: "numeric",
     view: "right",
     device: "Platform Crowd",
-    prompt: "6 traders each shake every other trader's hand exactly once. Enter the total.",
+    prompt:
+      "Six traders meet before the market opens. Each trader shakes hands with every other trader exactly once. Calculate the total number of handshakes.",
     aid: "handshake-ring",
     answerText: "15",
     l1: "Each trader shakes 5 hands — but every shake involves two people.",
