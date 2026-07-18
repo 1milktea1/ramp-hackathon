@@ -5,14 +5,11 @@ import type { PuzzleDefinition } from "@/lib/types";
 import { validate } from "@/lib/validators";
 import { emit } from "@/lib/events";
 import { PuzzleAid } from "./PuzzleAid";
+import { CameraPuzzle } from "./CameraPuzzle";
 
 /**
- * The terminal that carries 15 of the 18 questions (plan.md §3 — nearly every
- * question is `interaction: "numeric"`). Visual aids render above the input as
- * an optional prop, so a question still plays as text if its aid is unbuilt.
- *
- * While this modal is open it OWNS the keyboard: SceneShell suspends panorama
- * arrow-key rotation, otherwise typing into a puzzle would spin the room.
+ * Routes to CameraPuzzle for Scene 2 biometrics; otherwise the text/numeric terminal.
+ * While open it OWNS the keyboard: SceneShell suspends panorama arrow keys.
  */
 export function PuzzleModal({
   puzzle,
@@ -23,9 +20,26 @@ export function PuzzleModal({
   onSolved: (puzzleId: string) => void;
   onClose: () => void;
 }) {
+  if (puzzle.interaction === "camera") {
+    return <CameraPuzzle puzzle={puzzle} onSolved={onSolved} onClose={onClose} />;
+  }
+  return <TerminalPuzzle puzzle={puzzle} onSolved={onSolved} onClose={onClose} />;
+}
+
+function TerminalPuzzle({
+  puzzle,
+  onSolved,
+  onClose,
+}: {
+  puzzle: PuzzleDefinition;
+  onSolved: (puzzleId: string) => void;
+  onClose: () => void;
+}) {
   const [value, setValue] = useState("");
   const [shake, setShake] = useState(false);
+  const [incorrect, setIncorrect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const incorrectTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -54,8 +68,16 @@ export function PuzzleModal({
 
     emit("wrong_attempt", { puzzleId: puzzle.id, answer });
     setShake(true);
+    setIncorrect(true);
     setValue("");
     window.setTimeout(() => setShake(false), 300);
+    if (incorrectTimerRef.current != null) {
+      window.clearTimeout(incorrectTimerRef.current);
+    }
+    incorrectTimerRef.current = window.setTimeout(() => {
+      setIncorrect(false);
+      incorrectTimerRef.current = null;
+    }, 1600);
   }
 
   const isChoice = puzzle.interaction === "object_selection";
@@ -95,6 +117,16 @@ export function PuzzleModal({
 
         <PuzzleAid puzzleId={puzzle.id} />
 
+        {incorrect && (
+          <p
+            className="mb-3 text-[12px] font-semibold tracking-[0.12em]"
+            style={{ color: "var(--hot)" }}
+            role="alert"
+          >
+            Incorrect
+          </p>
+        )}
+
         {isChoice ? (
           <div className="flex gap-3">
             {["SWITCH", "STAY"].map((choice) => (
@@ -118,16 +150,19 @@ export function PuzzleModal({
             <input
               ref={inputRef}
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => {
+                setValue(e.target.value);
+                if (incorrect) setIncorrect(false);
+              }}
               inputMode={puzzle.interaction === "numeric" ? "numeric" : "text"}
               autoComplete="off"
               placeholder="_"
               aria-label="Your answer"
               className="flex-1 border-2 px-3 py-2 text-base tracking-widest outline-none"
               style={{
-                borderColor: "var(--edge)",
+                borderColor: incorrect ? "var(--hot)" : "var(--edge)",
                 background: "var(--panel)",
-                color: "var(--accent)",
+                color: incorrect ? "var(--hot)" : "var(--accent)",
               }}
             />
             <button type="submit" className="px-btn px-4 py-2 text-[10px]">

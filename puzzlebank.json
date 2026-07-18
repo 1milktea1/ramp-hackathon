@@ -1,0 +1,254 @@
+{
+  "locations": [
+    {
+      "location": "San Francisco",
+      "theme": "System Failure (SWE)",
+      "stages": [
+        {
+          "stage": 1,
+          "questions": [
+            {
+              "q": "Q1",
+              "difficulty": "E1",
+              "bank_id": "sf_two_sum",
+              "category": "array",
+              "interaction": "numeric",
+              "prompt": "The terminal displays a security code list [2,7,11,15]. The system unlocks only if you find the sum of the two positions whose values add up to the target 9. Enter the index sum.",
+              "answer": "1",
+              "hint_digit": "1"
+            },
+            {
+              "q": "Q2",
+              "difficulty": "E1",
+              "bank_id": "sf_missing_number",
+              "category": "array",
+              "interaction": "numeric",
+              "prompt": "A damaged access log shows the sequence [0,1,2,4,5]. One ID is missing from the sequence. Recover the missing value.",
+              "answer": "3",
+              "hint_digit": "3"
+            },
+            {
+              "q": "Q3",
+              "difficulty": "E1",
+              "bank_id": "sf_contains_dup",
+              "category": "array",
+              "interaction": "numeric",
+              "prompt": "The trading floor scanner recorded IDs [4,1,9,6,1]. One ID was accidentally duplicated. Identify the repeated ID.",
+              "answer": "1",
+              "hint_digit": "1"
+            }
+          ],
+          "hint_calculation": "ones digit of (1+3+1)",
+          "stage_hint": "5"
+        },
+        {
+          "stage": 2,
+          "questions": [
+            {
+              "q": "Q1",
+              "difficulty": "E1",
+              "bank_id": "sf_best_time_stock",
+              "category": "math",
+              "interaction": "camera",
+              "prompt": "The market terminal displays stock prices [7,1,5,3,6] over several days. Find the maximum profit possible by choosing the best time to buy and sell once. Face the scanner and raise that many fingers.",
+              "answer": "5",
+              "hint_digit": "5",
+              "gesture": "five_fingers"
+            },
+            {
+              "q": "Q2",
+              "difficulty": "E2",
+              "bank_id": "sf_unique_path_count",
+              "category": "dynamic_programming",
+              "interaction": "camera",
+              "prompt": "A courier robot must cross a 3 x 7 city grid to deliver a package. It can only travel right or down. Calculate the number of unique routes, then raise fingers equal to the tens digit of that count (one hand, at most five).",
+              "answer": "28",
+              "hint_digit": "8",
+              "gesture": "two_fingers_tens_digit"
+            },
+            {
+              "q": "Q3",
+              "difficulty": "E2",
+              "bank_id": "sf_valid_parens",
+              "category": "logic",
+              "interaction": "camera",
+              "prompt": "A vault door uses the bracket pattern (()()) as its authentication sequence. Raise one finger if the pattern is valid; otherwise raise fingers for the 0-based index of the first invalid symbol.",
+              "answer": "1",
+              "hint_digit": "1",
+              "gesture": "one_finger"
+            }
+          ],
+          "hint_calculation": "ones digit of (5+8+1=14)",
+          "stage_hint": "4"
+        },
+        {
+          "stage": 3,
+          "questions": [
+            {
+              "q": "Q1",
+              "difficulty": "E2",
+              "bank_id": "sf_binary_search",
+              "category": "logic",
+              "interaction": "numeric",
+              "prompt": "The archive terminal stores sorted access keys [3,9,14,22,31,40]. Locate the key 22 and enter its 0-based position.",
+              "answer": "3",
+              "hint_digit": "3"
+            },
+            {
+              "q": "Q2",
+              "difficulty": "M1",
+              "bank_id": "sf_max_subarray",
+              "category": "array",
+              "interaction": "numeric",
+              "prompt": "A server records network load changes [-2,4,-1,3,-2,2]. Find the largest continuous period of positive gain. Enter the maximum total change.",
+              "answer": "6",
+              "hint_digit": "6"
+            },
+            {
+              "q": "Q3",
+              "difficulty": "M1",
+              "bank_id": "sf_product_except_self",
+              "category": "array",
+              "interaction": "numeric",
+              "prompt": "A machine analyzes the array [2,3,4]. Replace the value at index 1 with the product of all other values. Enter the new value.",
+              "answer": "8",
+              "hint_digit": "8"
+            }
+          ],
+          "hint_calculation": "ones digit of (3+6+8=17)",
+          "stage_hint": "7"
+        }
+      ],
+      "final_code": "547",
+      "final_code_calculation": "Stage1 || Stage2 || Stage3 = 5 4 7",
+      "notes": "Scene 2 answers are MediaPipe hand gestures (finger counts / palm / fist) with Space-hold fallback. Camera open-palm verification can also gate the finale room; inside, the player enters 547 (stage hints 5\u20164\u20167)."
+    },
+    {
+      "location": "New York",
+      "theme": "Market Lockdown (Quant)",
+      "stages": [
+        {
+          "stage": 1,
+          "questions": [
+            {
+              "q": "Q1",
+              "difficulty": "E1",
+              "bank_id": "ny_two_dice_sum7",
+              "category": "probability",
+              "interaction": "numeric",
+              "prompt": "The trading vault requires a dice verification code. Two dice are rolled, creating 36 possible outcomes. Count how many outcomes produce a total of exactly 7.",
+              "answer": "6",
+              "hint_digit": "6"
+            },
+            {
+              "q": "Q2",
+              "difficulty": "E1",
+              "bank_id": "ny_card_ace",
+              "category": "probability",
+              "interaction": "numeric",
+              "prompt": "A security analyst checks a standard 52-card deck. The odds of drawing an Ace are written as \"1 in ___\". Determine the missing number.",
+              "answer": "13",
+              "hint_digit": "3"
+            },
+            {
+              "q": "Q3",
+              "difficulty": "E1",
+              "bank_id": "ny_handshakes",
+              "category": "math",
+              "interaction": "numeric",
+              "prompt": "Six traders meet before the market opens. Each trader shakes hands with every other trader exactly once. Calculate the total number of handshakes.",
+              "answer": "15",
+              "hint_digit": "5"
+            }
+          ],
+          "hint_calculation": "ones digit of (6+3+5)",
+          "stage_hint": "4"
+        },
+        {
+          "stage": 2,
+          "questions": [
+            {
+              "q": "Q1",
+              "difficulty": "E1",
+              "bank_id": "ny_coin_flip_ev",
+              "category": "probability",
+              "interaction": "camera",
+              "prompt": "A random security system flips a fair coin repeatedly until the first HEAD appears. Determine the expected number of flips, then raise that many fingers at the dial.",
+              "answer": "2",
+              "hint_digit": "2",
+              "gesture": "two_fingers"
+            },
+            {
+              "q": "Q2",
+              "difficulty": "E2",
+              "bank_id": "ny_balls_no_replace",
+              "category": "probability",
+              "interaction": "camera",
+              "prompt": "A market analyst inspects a bin containing 5 blue tokens and 3 red tokens. Two tokens are drawn without replacement. Find the numerator of the probability that both selected tokens are red (denominator 28), then raise that many fingers.",
+              "answer": "3",
+              "hint_digit": "3",
+              "correction": {
+                "was": "6",
+                "note": "P(both red) = (3/8)(2/7) = 6/56 = 3/28. Over the stated denominator 28 the numerator is 3, not 6 (6 is the numerator over 56)."
+              },
+              "gesture": "three_fingers"
+            },
+            {
+              "q": "Q3",
+              "difficulty": "E2",
+              "bank_id": "ny_monty_reveal",
+              "category": "logic",
+              "interaction": "camera",
+              "prompt": "A game host presents three vault doors, with only one containing the prize. After you choose a door, the host opens a losing door. Show an open palm to SWITCH or a closed fist to STAY.",
+              "answer": "SWITCH",
+              "hint_digit": "1",
+              "gesture": "open_palm_switch_or_fist_stay"
+            }
+          ],
+          "hint_calculation": "ones digit of (2+3+1)",
+          "stage_hint": "6"
+        },
+        {
+          "stage": 3,
+          "questions": [
+            {
+              "q": "Q1",
+              "difficulty": "E2",
+              "bank_id": "ny_locker_doors",
+              "category": "logic",
+              "interaction": "numeric",
+              "prompt": "The final security chamber contains 20 locked doors. For each round k = 1 through 20, the system toggles every door whose number is a multiple of k. After all rounds finish, determine how many doors remain open.",
+              "answer": "4",
+              "hint_digit": "4"
+            },
+            {
+              "q": "Q2",
+              "difficulty": "M1",
+              "bank_id": "ny_bayes_coin",
+              "category": "probability",
+              "interaction": "numeric",
+              "prompt": "A vault contains two normal coins and one double-headed coin. A random coin is selected and flipped once, resulting in HEADS. Calculate the percentage chance that the chosen coin was the double-headed coin.",
+              "answer": "50",
+              "hint_digit": "0"
+            },
+            {
+              "q": "Q3",
+              "difficulty": "M1",
+              "bank_id": "ny_weighted_ev",
+              "category": "probability",
+              "interaction": "numeric",
+              "prompt": "A trader evaluates a new strategy with possible returns: +$12 with 25% probability, +$2 with 50% probability, and -$4 with 25% probability. Calculate the expected value of the trade.",
+              "answer": "3",
+              "hint_digit": "3"
+            }
+          ],
+          "hint_calculation": "ones digit of (4+0+3)",
+          "stage_hint": "7"
+        }
+      ],
+      "final_code": "467",
+      "final_code_calculation": "Stage1 || Stage2 || Stage3 = 4 6 7",
+      "notes": "Correction (was 497): recomputed Stage 2 numerator/hint per ny_balls_no_replace correction, giving final NYC code 467."
+    }
+  ]
+}

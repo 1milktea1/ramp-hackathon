@@ -5,6 +5,7 @@ import { SceneShell } from "@/components/scene/SceneShell";
 import { ResultsScreen } from "@/components/system/ResultsScreen";
 import { DebugMenu } from "@/components/system/DebugMenu";
 import { CAMPAIGN_LIST, getCampaign } from "@/lib/campaigns";
+import { preloadHandLandmarker } from "@/lib/mediapipe-hands";
 import { useGameStore } from "@/lib/store";
 import type { CampaignId } from "@/lib/types";
 import "@/lib/validators.answers";
@@ -65,7 +66,11 @@ export default function Home() {
                 data-campaign={c.id}
                 onMouseEnter={() => setHovered(c.id)}
                 onMouseLeave={() => setHovered(null)}
-                onClick={() => selectCampaign(c.id, c.durationSec)}
+                onClick={() => {
+                  // Warm the on-device hand model before Scene 2 biometrics.
+                  void preloadHandLandmarker().catch(() => {});
+                  selectCampaign(c.id, c.durationSec);
+                }}
                 className="px-border px-scan p-5 text-left"
                 style={{
                   background: "var(--panel)",
