@@ -74,9 +74,11 @@ export function readHand(landmarks: Landmark[]): HandReading {
   };
 }
 
-/** Sum raised fingers across every detected hand (supports answers 6–10). */
-export function totalFingers(hands: Landmark[][]): number {
-  return hands.reduce((n, h) => n + readHand(h).fingerCount, 0);
+/** Raised fingers on the strongest hand, capped at five. */
+export function primaryFingerCount(hands: Landmark[][]): number {
+  if (hands.length === 0) return 0;
+  const count = Math.max(...hands.map((h) => readHand(h).fingerCount));
+  return Math.min(5, count);
 }
 
 export function framingFromHands(hands: Landmark[][]): FramingHint {

@@ -11,7 +11,6 @@ import {
   framingFromHands,
   framingMessage,
   readHand,
-  totalFingers,
   type FramingHint,
   type Landmark,
 } from "@/lib/hand-gestures";
@@ -38,8 +37,12 @@ function gestureMatches(
     return { match: false, detectedLabel: "—" };
   }
 
-  const fingers = totalFingers(hands);
-  const primary = readHand(hands[0]);
+  // Finger answers are one-hand only (max five). Prefer the hand with more fingers up.
+  const readings = hands.map(readHand);
+  const primary = readings.reduce((best, h) =>
+    h.fingerCount > best.fingerCount ? h : best
+  );
+  const fingers = Math.min(5, primary.fingerCount);
 
   if (target.gesture.kind === "palm") {
     if (primary.isPalm) {
@@ -62,7 +65,7 @@ function gestureMatches(
     };
   }
 
-  const need = target.gesture.count;
+  const need = Math.min(5, target.gesture.count);
   const match = fingers === need;
   return {
     match,

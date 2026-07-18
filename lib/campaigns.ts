@@ -162,10 +162,10 @@ const SF_STAGE_2: QuestionSeed[] = [
     view: "center",
     device: "Courier Grid",
     prompt:
-      "A courier crosses a 3 × 7 grid, moving only right or down. Count the unique routes, then raise fingers equal to the ones digit of that count (both hands OK).",
+      "A courier crosses a 3 × 7 grid, moving only right or down. Count the unique routes, then raise fingers equal to the tens digit (one hand, at most five).",
     answerText: "28",
     l1: "Only right and down — no up or left moves.",
-    l2: "Paths on a grid are combinations. The ones digit is what the scanner reads.",
+    l2: "Paths on a grid are combinations. Signal the tens digit of that total.",
     sec: 70,
   },
   {

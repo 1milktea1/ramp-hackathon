@@ -61,10 +61,10 @@
               "bank_id": "sf_unique_path_count",
               "category": "dynamic_programming",
               "interaction": "camera",
-              "prompt": "A courier robot must cross a 3 x 7 city grid to deliver a package. It can only travel right or down. Calculate the number of unique routes, then raise fingers equal to the ones digit of that count (use both hands for 6-9).",
+              "prompt": "A courier robot must cross a 3 x 7 city grid to deliver a package. It can only travel right or down. Calculate the number of unique routes, then raise fingers equal to the tens digit of that count (one hand, at most five).",
               "answer": "28",
               "hint_digit": "8",
-              "gesture": "eight_fingers_both_hands"
+              "gesture": "two_fingers_tens_digit"
             },
             {
               "q": "Q3",

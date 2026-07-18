@@ -20,7 +20,8 @@ export type CameraPuzzleTarget = {
 
 /**
  * Map Scene 2 bank IDs → required gestures.
- * Finger counts 1–5 use one hand; 6–10 sum both hands.
+ * Finger-count answers are capped at one hand (1–5). Digits above 5 use
+ * another place value or a palm/fist signal instead.
  */
 export const CAMERA_TARGETS: Record<string, CameraPuzzleTarget> = {
   sf_best_time_stock: {
@@ -31,11 +32,12 @@ export const CAMERA_TARGETS: Record<string, CameraPuzzleTarget> = {
       "Raise fingers equal to the maximum profit (open palm counts as five).",
   },
   sf_unique_path_count: {
-    gesture: { kind: "fingers", count: 8 },
+    // Full answer 28; ones digit is 8 (>5), so the scanner reads the tens digit.
+    gesture: { kind: "fingers", count: 2 },
     answer: "28",
     label: "ROUTE SEAL",
     instruction:
-      "Compute the route count, then raise fingers equal to its ones digit (use both hands for 6–9).",
+      "Compute the route count, then raise fingers equal to its tens digit (one hand, max five).",
   },
   sf_valid_parens: {
     gesture: { kind: "fingers", count: 1 },
@@ -74,6 +76,5 @@ export function describeGesture(gesture: GestureTarget): string {
   if (gesture.kind === "fist") return "Closed fist";
   if (gesture.count === 0) return "Closed fist (0 fingers)";
   if (gesture.count === 5) return "Five fingers / open palm";
-  if (gesture.count > 5) return `${gesture.count} fingers total (both hands)`;
   return `${gesture.count} finger${gesture.count === 1 ? "" : "s"}`;
 }
