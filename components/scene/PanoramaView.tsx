@@ -4,17 +4,15 @@ import type { PuzzleDefinition, SceneDefinition, ViewDirection } from "@/lib/typ
 import { VIEW_ORDER, puzzleForView } from "@/lib/campaigns";
 import { SceneBackdrop } from "./SceneBackdrop";
 
-// Rooms are ultrawide 3:1 art showing three connected views; each third is one
-// view (docs/asset-prompts.md).
-const CROP: Record<ViewDirection, string> = {
-  left: "0% 50%",
-  center: "50% 50%",
-  right: "100% 50%",
-};
-
 /**
  * Three coordinated views on a sliding track. Q1 lives on the left wall,
- * Q2 on the center, Q3 on the right — so rotating IS the progression.
+ * Q2 on the centre, Q3 on the right — so rotating IS the progression.
+ *
+ * The room art is ONE ultrawide 3:1 image spanning the entire track, not three
+ * crops of it. That distinction matters: cropping per panel would show
+ * non-adjacent slices side by side and the transition would jump at every seam.
+ * Spanning it means the slide reads as a continuous camera pan across one room.
+ * See docs/asset-prompts.md.
  */
 export function PanoramaView({
   scene,
@@ -29,69 +27,84 @@ export function PanoramaView({
 }) {
   const index = VIEW_ORDER.indexOf(view);
 
+  // All three views share one source image; `center` is the canonical path.
+  const art = scene.backgrounds.center;
+
   return (
-    <div className="relative flex-1 overflow-hidden" style={{ background: "var(--panel)" }}>
+    <div className="relative flex-1 overflow-hidden" style={{ background: "var(--ink)" }}>
       <div
-        className="flex h-full w-[300%] transition-transform duration-300 ease-out"
+        className="absolute inset-y-0 left-0 w-[300%] transition-transform duration-300 ease-out"
         style={{ transform: `translateX(-${index * (100 / 3)}%)` }}
       >
-        {VIEW_ORDER.map((v) => {
-          const puzzle = puzzleForView(scene, v);
-          const hotspot = scene.hotspots.find((h) => h.view === v);
-          const solved = puzzle ? completedPuzzleIds.includes(puzzle.id) : false;
+        {/* Continuous art layer across the full track. A missing file renders
+            nothing rather than a broken image, leaving the CSS rooms visible. */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: `url(${art})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
 
-          return (
-            <div
-              key={v}
-              className="px-scan relative grid w-1/3 shrink-0 place-items-center"
-              aria-hidden={v !== view}
-            >
-              {/* CSS room is the fallback layer. */}
-              <SceneBackdrop sceneId={scene.id} view={v} />
+        <div className="flex h-full">
+          {VIEW_ORDER.map((v) => {
+            const puzzle = puzzleForView(scene, v);
+            const hotspot = scene.hotspots.find((h) => h.view === v);
+            const solved = puzzle ? completedPuzzleIds.includes(puzzle.id) : false;
 
-              {/* Generated art layers over it. A missing file renders nothing
-                  rather than a broken image, so this is safe to leave wired
-                  before the assets exist. See docs/asset-prompts.md. */}
+            return (
               <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  backgroundImage: `url(${scene.backgrounds[v]})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: CROP[v],
-                }}
-              />
+                key={v}
+                className="px-scan relative grid w-1/3 shrink-0 place-items-center"
+                aria-hidden={v !== view}
+              >
+                {/* Fallback room, drawn per third. Covered once art lands. */}
+                <div className="-z-10">
+                  <SceneBackdrop sceneId={scene.id} view={v} />
+                </div>
 
-              {puzzle && hotspot && (
-                <button
-                  onClick={() => onOpenPuzzle(puzzle)}
-                  tabIndex={v === view ? 0 : -1}
-                  // relative/z-10 is load-bearing: the backdrop is absolutely
-                  // positioned, so a static button would paint underneath it.
-                  className="group relative z-10 grid place-items-center gap-2 border-2 px-6 py-5"
-                  style={{
-                    borderColor: solved ? "var(--lit)" : "var(--accent)",
-                    borderStyle: solved ? "solid" : "dashed",
-                    background: "rgba(11,14,20,0.86)",
-                  }}
-                >
-                  <span
-                    className="text-[9px] tracking-[0.22em]"
-                    style={{ color: solved ? "var(--lit)" : "var(--accent)" }}
+                {puzzle && hotspot && (
+                  <button
+                    onClick={() => onOpenPuzzle(puzzle)}
+                    tabIndex={v === view ? 0 : -1}
+                    // relative/z-10 is load-bearing: the art and backdrop layers
+                    // are absolutely positioned, so a static button hides behind them.
+                    className="group relative z-10 grid place-items-center gap-2 border-2 px-6 py-5 backdrop-blur-[1px]"
+                    style={{
+                      borderColor: solved ? "var(--lit)" : "var(--accent)",
+                      borderStyle: solved ? "solid" : "dashed",
+                      background: "rgba(11,14,20,0.72)",
+                    }}
                   >
-                    {hotspot.label.toUpperCase()}
-                  </span>
-                  <span className="text-[10px]" style={{ color: "var(--dim)" }}>
-                    {solved ? "✓ RESOLVED" : "INTERACT"}
-                  </span>
-                </button>
-              )}
-            </div>
-          );
-        })}
+                    <span
+                      className="text-[9px] tracking-[0.22em]"
+                      style={{ color: solved ? "var(--lit)" : "var(--accent)" }}
+                    >
+                      {hotspot.label.toUpperCase()}
+                    </span>
+                    <span className="text-[10px]" style={{ color: "var(--dim)" }}>
+                      {solved ? "✓ RESOLVED" : "INTERACT"}
+                    </span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
+      {/* Vignette keeps the HUD and MIRA captions legible over bright art. */}
+      <div
+        className="pointer-events-none absolute inset-0 z-10"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, transparent 45%, rgba(11,14,20,0.55) 100%)",
+        }}
+      />
+
       {/* Which wall you're facing, and which questions are done. */}
-      <div className="pointer-events-none absolute left-1/2 top-3 flex -translate-x-1/2 gap-1.5">
+      <div className="pointer-events-none absolute left-1/2 top-3 z-20 flex -translate-x-1/2 gap-1.5">
         {VIEW_ORDER.map((v) => {
           const p = puzzleForView(scene, v);
           const done = p ? completedPuzzleIds.includes(p.id) : false;
