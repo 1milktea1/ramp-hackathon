@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PuzzleDefinition } from "@/lib/types";
 import { validate } from "@/lib/validators";
 import { emit } from "@/lib/events";
+import { PuzzleAid } from "./PuzzleAid";
 
 /**
  * The terminal that carries 15 of the 18 questions (plan.md §3 — nearly every
@@ -88,9 +89,11 @@ export function PuzzleModal({
           </button>
         </div>
 
-        <p className="mb-5 text-[13px] leading-relaxed" style={{ color: "var(--txt)" }}>
+        <p className="mb-4 text-[13px] leading-relaxed" style={{ color: "var(--txt)" }}>
           {puzzle.prompt}
         </p>
+
+        <PuzzleAid puzzleId={puzzle.id} />
 
         {isChoice ? (
           <div className="flex gap-3">

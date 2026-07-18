@@ -410,3 +410,26 @@ export function puzzleForView(
 
 /** Ordered [left, center, right] views — the Q1/Q2/Q3 progression. */
 export const VIEW_ORDER = VIEWS;
+
+// --- Visual aids --------------------------------------------
+//
+// PuzzleDefinition is frozen, so aids are looked up by puzzle id rather than
+// carried as a field. A question with no entry renders as text — aids are
+// additive and never required to solve anything.
+
+export type AidSpec =
+  | { kind: "dice" }
+  | { kind: "bays"; values: number[]; range: number }
+  | { kind: "ring"; n: number }
+  | { kind: "bars"; values: number[]; prefix?: string };
+
+export const AIDS: Record<string, AidSpec> = {
+  // 36 outcomes made concrete; counting the sevens is still the player's job.
+  ny_two_dice_sum7: { kind: "dice" },
+  // Six bays, five reported — the gap is visible, its value is not labelled.
+  sf_missing_number: { kind: "bays", values: [0, 1, 2, 4, 5], range: 6 },
+  // Click two traders to shake. A pair already shaken will not redraw.
+  ny_handshakes: { kind: "ring", n: 6 },
+  sf_best_time_stock: { kind: "bars", values: [7, 1, 5, 3, 6], prefix: "$" },
+  sf_max_subarray: { kind: "bars", values: [-2, 4, -1, 3, -2, 2] },
+};

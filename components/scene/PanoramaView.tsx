@@ -2,13 +2,7 @@
 
 import type { PuzzleDefinition, SceneDefinition, ViewDirection } from "@/lib/types";
 import { VIEW_ORDER, puzzleForView } from "@/lib/campaigns";
-
-// One wide 16:9 image per scene, cropped by object-position (plan.md §10).
-const CROP: Record<ViewDirection, string> = {
-  left: "0% 50%",
-  center: "50% 50%",
-  right: "100% 50%",
-};
+import { SceneBackdrop } from "./SceneBackdrop";
 
 /**
  * Three coordinated views on a sliding track. Q1 lives on the left wall,
@@ -42,15 +36,12 @@ export function PanoramaView({
             <div
               key={v}
               className="px-scan relative grid w-1/3 shrink-0 place-items-center"
-              style={{
-                // Background image is applied optimistically; until Person D's
-                // art lands the panel simply reads as an empty lit room.
-                backgroundImage: `url(${scene.backgrounds[v]})`,
-                backgroundSize: "cover",
-                backgroundPosition: CROP[v],
-              }}
               aria-hidden={v !== view}
             >
+              {/* Rooms are drawn in CSS. If a bitmap ever lands in
+                  scene.backgrounds it layers on top without a code change. */}
+              <SceneBackdrop sceneId={scene.id} view={v} />
+
               {puzzle && hotspot && (
                 <button
                   onClick={() => onOpenPuzzle(puzzle)}
