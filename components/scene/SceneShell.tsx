@@ -11,7 +11,7 @@ import { NavigationArrows } from "./NavigationArrows";
 import { TopBar } from "../system/TopBar";
 import { DigitTray } from "../system/DigitTray";
 import { MiraCaption } from "../game-master/MiraCaption";
-import { ConvictionMeter } from "../game-master/ConvictionMeter";
+import { MiraChat } from "../game-master/MiraChat";
 import { PuzzleModal } from "../puzzles/PuzzleModal";
 import { FinalePanel } from "../campaign/FinalePanel";
 
@@ -168,7 +168,7 @@ export function SceneShell({
               Enter final code ▶
             </button>
           )}
-          <ConvictionMeter
+          <MiraChat
             key={scene.id}
             sceneId={scene.id}
             onHint={(message) => setCaption(message)}
