@@ -209,3 +209,156 @@ file in and it layers over the CSS backdrop with no code change. If a room reads
 too bright and the HUD stops being legible, darken the asset rather than adding
 an overlay in code — the fallback backdrop is tuned to the same palette and the
 two should stay interchangeable.
+
+---
+
+# Device Sprites
+
+The sixteen interactive objects that currently render as dashed rectangles
+labelled "INTERACT". Each replaces one plate on one wall of one scene.
+
+## Locked device style block
+
+Paste **before** every device prompt:
+
+> 8-bit pixel art game sprite, transparent background, single object centred in
+> frame, chunky readable pixels with no anti-aliasing, flat colour blocks,
+> limited palette, thick dark outline so the object reads against any
+> background, front-facing three-quarter view, strong silhouette, glowing
+> screen or indicator as the brightest element,
+
+Paste **after** every device prompt:
+
+> — 8-bit pixel art, transparent background, PNG with alpha, no text, no
+> letters, no numbers, no logos, no drop shadow, no background scenery,
+> no ground plane, no frame or border.
+
+### Why these constraints
+
+- **Transparent background is mandatory.** These composite onto the room art.
+  Any baked background colour will show as a rectangle over the scene — exactly
+  the problem we are fixing.
+- **Thick dark outline.** The same sprite sits on a bright lamp pool in `sf-1`
+  and near-black wall in `ny-3`. Without an outline it dissolves into one or
+  the other.
+- **No text.** The UI draws the device label and state underneath. Generated
+  lettering will also fight the pixel grid.
+- **No ground plane or shadow.** The sprite floats on the wall; a baked shadow
+  implies a floor that will not line up with the room's perspective.
+
+### Dimensions and states
+
+**512 × 384 (4:3)**, object filling roughly 85% of the frame with even margin.
+
+Ship **one** sprite per device. Unsolved, hover and solved states are done in
+CSS — a colour-shifted outline and a glow — so no extra art is needed. Accent
+is teal `#4ad9c4` for San Francisco, amber `#ffcf4a` for New York.
+
+---
+
+## San Francisco — Stage 1 · SoMa Transit Stop
+
+### `public/devices/sf1-arrivals-terminal.png`
+> a wall-mounted transit arrivals screen, dark rectangular housing with a
+> glowing teal display panel showing abstract horizontal light bars, small
+> status LED beneath, short conduit stub at the top
+
+### `public/devices/sf1-bay-board.png`
+> a large mechanical split-flap departure board, dark metal frame divided into
+> a row of six blank flap slots, one slot dark and empty while the others glow
+> faint teal, visible hinge line across each flap
+
+### `public/devices/sf1-maintenance-panel.png`
+> an open grey utility panel set into a wall, hinged metal door swung to one
+> side, interior showing a column of toggle switches and coloured wire bundles,
+> one small teal indicator lamp lit
+
+## San Francisco — Stage 2 · Cursor Development Floor
+
+### `public/devices/sf2-ramp-ticker.png`
+> a slim wall-mounted financial ticker display, long narrow black housing with
+> a glowing amber-on-dark strip showing abstract rising and falling bar shapes,
+> thin mounting bracket at each end
+
+### `public/devices/sf2-build-console.png`
+> a developer terminal on a small desk, boxy CRT-style monitor with a glowing
+> teal screen showing a single blinking block cursor, chunky mechanical
+> keyboard in front, thick coiled cable
+
+### `public/devices/sf2-log-wall.png`
+> a tall narrow rack of stacked monitors mounted vertically, four screens in a
+> column each glowing teal with abstract horizontal scan lines, dark metal
+> frame, cables running down the side
+
+## San Francisco — Stage 3 · OpenAI Mission Bay Node
+
+### `public/devices/sf3-index-scanner.png`
+> a floor-standing scanner pedestal, smooth white and dark grey column with a
+> circular glowing teal lens set into the angled top face, thin light ring
+> around the lens
+
+### `public/devices/sf3-load-graph.png`
+> a wall-mounted display panel showing an abstract bar chart, dark bezel, six
+> vertical bars of differing heights glowing teal above a baseline, small
+> indicator lamp in the corner
+
+### `public/devices/sf3-packet-array.png`
+> a server blade array, dark rack chassis holding five horizontal blades
+> stacked vertically, each blade face carrying a small round teal indicator
+> light, ventilation slots along the front
+
+---
+
+## New York — Stage 1 · 23rd Street Subway
+
+### `public/devices/ny1-odds-board.png`
+> a wall-mounted odds board in a subway station, scuffed dark metal frame with
+> a grid of small amber bulb-style cells, some lit and some dark, chipped paint
+> along the edges
+
+### `public/devices/ny1-token-booth.png`
+> a subway token booth window, dark metal frame with a round speaking grille in
+> the centre of thick scratched glass, a shallow payment tray at the bottom,
+> warm amber light glowing from inside
+
+### `public/devices/ny1-platform-crowd.png`
+> six simple blocky human silhouettes standing in a loose ring facing inward,
+> flat dark shapes with amber rim lighting, no facial detail, arranged so each
+> figure is clearly separate from its neighbours
+
+Exception to the no-people rule: this device *is* the handshake puzzle, so the
+six figures are the subject. Keep them abstract blocky silhouettes.
+
+## New York — Stage 2 · Ramp Headquarters
+
+### `public/devices/ny2-verification-dial.png`
+> a large circular rotary dial set into a dark metal console face, heavy
+> knurled amber-lit rim, a single pointer notch at the top, tick marks around
+> the circumference, small status lamp beside it
+
+### `public/devices/ny2-settlement-bin.png`
+> a transparent hopper bin on a dark base, clear angular container holding a
+> mix of round blue and red tokens settled at the bottom, narrow dispensing
+> chute at the front, amber underlighting
+
+### `public/devices/ny2-three-vaults.png`
+> three small vault doors side by side in a dark wall, each a circular metal
+> door with a central spoked handle, heavy riveted frames, amber indicator lamp
+> above each door
+
+## New York — Stage 3 · Lower Manhattan Exchange
+
+### `public/devices/ny3-exchange-desk.png`
+> a trading desk workstation, dark angular desk carrying three monitors in an
+> arc all glowing amber with abstract chart shapes, a chunky handset phone to
+> one side, keyboard in front, cables draped behind
+
+---
+
+## Wiring finished sprites
+
+`HotspotDefinition` is frozen and has no sprite field, so the path is derived
+by convention from the hotspot id — the same approach used for finale art.
+Files landing in `public/devices/` render inside the plate; a missing file
+falls back to the current dashed rectangle, so these can be added one at a
+time without breaking a scene.

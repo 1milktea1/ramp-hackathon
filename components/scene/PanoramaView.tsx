@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
 import type { PuzzleDefinition, SceneDefinition, ViewDirection } from "@/lib/types";
-import { VIEW_ORDER, puzzleForView } from "@/lib/campaigns";
+import { VIEW_ORDER, deviceSprite, puzzleForView } from "@/lib/campaigns";
 import { SceneBackdrop } from "./SceneBackdrop";
 
 /**
@@ -14,6 +16,42 @@ import { SceneBackdrop } from "./SceneBackdrop";
  * Spanning it means the slide reads as a continuous camera pan across one room.
  * See docs/asset-prompts.md.
  */
+/**
+ * The device art. Renders nothing until the sprite exists, so a scene without
+ * art still shows the labelled plate rather than an empty gap.
+ * Solved state is a hue shift in CSS — one sprite covers both states.
+ */
+function DeviceSprite({
+  sceneId,
+  label,
+  solved,
+}: {
+  sceneId: string;
+  label: string;
+  solved: boolean;
+}) {
+  const [missing, setMissing] = useState(false);
+  if (missing) return null;
+
+  return (
+    <Image
+      src={deviceSprite(sceneId, label)}
+      alt=""
+      width={512}
+      height={384}
+      unoptimized
+      onError={() => setMissing(true)}
+      className="h-24 w-auto object-contain"
+      style={{
+        imageRendering: "pixelated",
+        filter: solved
+          ? "hue-rotate(75deg) saturate(1.2)"
+          : "drop-shadow(0 0 6px var(--accent))",
+      }}
+    />
+  );
+}
+
 export function PanoramaView({
   scene,
   view,
@@ -77,6 +115,11 @@ export function PanoramaView({
                       background: "rgba(11,14,20,0.72)",
                     }}
                   >
+                    <DeviceSprite
+                      sceneId={scene.id}
+                      label={hotspot.label}
+                      solved={solved}
+                    />
                     <span
                       className="text-[9px] tracking-[0.22em]"
                       style={{ color: solved ? "var(--lit)" : "var(--accent)" }}

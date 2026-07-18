@@ -399,6 +399,21 @@ export function puzzleForView(
 export const VIEW_ORDER = VIEWS;
 
 /**
+ * Sprite for an interactive device. HotspotDefinition is frozen and has no
+ * sprite field, so the path is derived from the scene id and device label:
+ * scene "sf-1" + "Bay Board" → /devices/sf1-bay-board.png.
+ * See docs/asset-prompts.md.
+ */
+export function deviceSprite(sceneId: string, label: string): string {
+  const scene = sceneId.replace(/-/g, "");
+  const slug = label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `/devices/${scene}-${slug}.png`;
+}
+
+/**
  * Art for the finale room. CampaignDefinition is frozen and has no field for
  * it, so the path is derived by convention rather than stored.
  */
