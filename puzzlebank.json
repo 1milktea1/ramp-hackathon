@@ -1,0 +1,622 @@
+{
+  "_meta": {
+    "description": "Machine-readable version of content/puzzle-bank.md, shaped as PuzzleDefinition records (see plan.md §5.1 / README §17 for the frozen /lib/types.ts contract).",
+    "difficultyScale": {
+      "E1": { "meaning": "Trivial, one lookup/arithmetic step", "expectedDurationSec": 30 },
+      "E2": { "meaning": "Easy, one small logical step (off-by-one, one conditional)", "expectedDurationSec": 50 },
+      "M1": { "meaning": "Medium, two chained steps or requires care", "expectedDurationSec": 75 }
+    },
+    "hintDigitRule": "hint_digit(puzzle) = ones digit of the puzzle's numeric answer, except SWITCH/STAY -> 1/0 and sf_backspace_compare -> number of Backspace keystrokes used (1). stage_hint = ones digit of the sum of a stage's 3 hint digits. finale_code = stage1_hint + stage2_hint + stage3_hint (concatenated).",
+    "campaigns": {
+      "san-francisco-swe": {
+        "stages": {
+          "SF-1": { "puzzleIds": ["sf_two_sum", "sf_missing_number", "sf_contains_dup"], "hintDigit": 5 },
+          "SF-2": { "puzzleIds": ["sf_best_time_stock", "sf_backspace_compare", "sf_valid_parens"], "hintDigit": 7 },
+          "SF-3": { "puzzleIds": ["sf_binary_search", "sf_max_subarray", "sf_product_except_self"], "hintDigit": 7 }
+        },
+        "finaleCode": "577"
+      },
+      "new-york-quant": {
+        "stages": {
+          "NYC-1": { "puzzleIds": ["ny_two_dice_sum7", "ny_card_ace", "ny_handshakes"], "hintDigit": 4 },
+          "NYC-2": { "puzzleIds": ["ny_coin_flip_ev", "ny_balls_no_replace", "ny_monty_reveal"], "hintDigit": 9 },
+          "NYC-3": { "puzzleIds": ["ny_locker_doors", "ny_bayes_coin", "ny_weighted_ev"], "hintDigit": 7 }
+        },
+        "finaleCode": "497"
+      }
+    }
+  },
+  "puzzles": [
+    {
+      "id": "sf_two_sum",
+      "validatorKey": "sf_two_sum",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-1",
+      "status": "active",
+      "source": "NeetCode #1 Two Sum (Easy)",
+      "difficulty": "E1",
+      "category": "array",
+      "interaction": "numeric",
+      "prompt": "Terminal log: [2, 7, 11, 15]. Note: \"TARGET SUM = 9. ENTER THE SUM OF THE TWO INDICES.\" (0 and 1)",
+      "answer": "1",
+      "hintDigit": 1,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Two entries in that array add up to the posted target — look for the pair, not a single value.",
+        "level2": "Check index 0 and index 1 first; their values already sum close to the target.",
+        "level3": "Indices 0 and 1 hold the pair that sums to 9.",
+        "level4": "0 + 1 = 1. Enter that."
+      }
+    },
+    {
+      "id": "sf_contains_dup",
+      "validatorKey": "sf_contains_dup",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-1",
+      "status": "active",
+      "source": "NeetCode Contains Duplicate (Easy)",
+      "difficulty": "E1",
+      "category": "array",
+      "interaction": "numeric",
+      "prompt": "Board shows [4, 1, 9, 6, 1]. \"One packet ID was re-sent. Enter the duplicate.\"",
+      "answer": "1",
+      "hintDigit": 1,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "One ID on that board shows up twice.",
+        "level2": "Scan left to right and flag the first value you've already seen.",
+        "level3": "The value 1 appears at two positions.",
+        "level4": "Enter 1 — that's the repeated ID."
+      }
+    },
+    {
+      "id": "sf_best_time_stock",
+      "validatorKey": "sf_best_time_stock",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-2",
+      "status": "active",
+      "source": "NeetCode Best Time to Buy/Sell Stock (Easy)",
+      "difficulty": "E1",
+      "category": "math",
+      "interaction": "numeric",
+      "prompt": "Ramp ticker: [7, 1, 5, 3, 6]. \"Enter the maximum possible gain (buy low, sell later-high).\"",
+      "answer": "5",
+      "hintDigit": 5,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Find the lowest price, then the best price that comes after it.",
+        "level2": "Buy at the lowest point that occurs before a later high.",
+        "level3": "Buy at 1, sell at 6 — that's the largest gap in that order.",
+        "level4": "6 − 1 = 5. Enter 5."
+      }
+    },
+    {
+      "id": "sf_valid_anagram",
+      "validatorKey": "sf_valid_anagram",
+      "campaign": "san-francisco-swe",
+      "stage": null,
+      "status": "backup",
+      "source": "NeetCode Valid Anagram (Easy)",
+      "difficulty": "E1",
+      "category": "logic",
+      "interaction": "object_selection",
+      "prompt": "Two file names glow: TRACE and CRATE. \"Select the pair if they're anagrams, else select MISMATCH.\"",
+      "answer": "MATCH",
+      "hintDigit": null,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Compare the letters in both names, not their order.",
+        "level2": "Count each letter in both words — same letters, same counts means a match.",
+        "level3": "TRACE and CRATE use exactly the same five letters.",
+        "level4": "Select MATCH."
+      }
+    },
+    {
+      "id": "sf_missing_number",
+      "validatorKey": "sf_missing_number",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-1",
+      "status": "active",
+      "source": "NeetCode Missing Number (Easy)",
+      "difficulty": "E1",
+      "category": "array",
+      "interaction": "numeric",
+      "prompt": "Sequence board: 0, 1, 2, 4, 5 (range should be 0–5). \"Enter the missing node ID.\"",
+      "answer": "3",
+      "hintDigit": 3,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "The board should run in one continuous range — one rung is missing.",
+        "level2": "List 0 through 5 and see which one isn't on the board.",
+        "level3": "0, 1, 2 are there, and 4, 5 are there — one number between them is gone.",
+        "level4": "3 is missing. Enter 3."
+      }
+    },
+    {
+      "id": "sf_valid_parens",
+      "validatorKey": "sf_valid_parens",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-2",
+      "status": "active",
+      "source": "NeetCode Valid Parentheses (Easy)",
+      "difficulty": "E2",
+      "category": "logic",
+      "interaction": "numeric",
+      "prompt": "Log string: ( ( ) ( ) ). \"If balanced enter 1, else enter the index (0-based) of the first bracket that breaks it.\"",
+      "answer": "1",
+      "hintDigit": 1,
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "Every opening bracket needs a matching close, in order.",
+        "level2": "Track open brackets one at a time; if none are open when you hit ')', that's the break — otherwise it closes clean.",
+        "level3": "Walking the string, every open bracket finds its close before the string ends.",
+        "level4": "It's balanced — enter 1."
+      }
+    },
+    {
+      "id": "sf_backspace_compare",
+      "validatorKey": "sf_backspace_compare",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-2",
+      "status": "active",
+      "source": "NeetCode Backspace String Compare (Easy)",
+      "difficulty": "E2",
+      "category": "logic",
+      "interaction": "keyboard_sequence",
+      "prompt": "Corrupted buffer arrives on screen as cu#rsor (# = a literal Backspace keystroke). Retype it on the real keyboard, pressing Backspace where # appears, to resolve it to the clean value.",
+      "answer": "crsor",
+      "hintDigit": 1,
+      "hintDigitNote": "1 Backspace keystroke used to resolve the buffer",
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "The # isn't a character — it's a real keystroke waiting to happen.",
+        "level2": "Type the buffer left to right, and press actual Backspace whenever you hit a #.",
+        "level3": "c, u, Backspace (removes u), r, s, o, r — resolves to five letters.",
+        "level4": "The clean value is crsor — and you only needed one Backspace to get there."
+      }
+    },
+    {
+      "id": "sf_min_stack",
+      "validatorKey": "sf_min_stack",
+      "campaign": "san-francisco-swe",
+      "stage": null,
+      "status": "backup",
+      "source": "NeetCode Min Stack (Easy)",
+      "difficulty": "E2",
+      "category": "data_structure",
+      "interaction": "numeric",
+      "prompt": "Terminal ops: PUSH 5, PUSH 2, PUSH 8, GET_MIN, POP, GET_MIN. \"Enter the second GET_MIN result.\"",
+      "answer": "2",
+      "hintDigit": null,
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "GET_MIN reports the smallest value currently on the stack, not the whole history.",
+        "level2": "Replay the ops in order and track what's on the stack after each POP.",
+        "level3": "After the POP, only 5 and 2 remain on the stack.",
+        "level4": "The second GET_MIN is 2."
+      }
+    },
+    {
+      "id": "sf_binary_search",
+      "validatorKey": "sf_binary_search",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-3",
+      "status": "active",
+      "source": "NeetCode Binary Search (Easy)",
+      "difficulty": "E2",
+      "category": "logic",
+      "interaction": "numeric",
+      "prompt": "Sorted access list [3, 9, 14, 22, 31, 40]; scanner says higher/lower. \"Enter the index (0-based) of value 22.\"",
+      "answer": "3",
+      "hintDigit": 3,
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "The list is sorted — you don't need to scan every entry.",
+        "level2": "Halve the search range each time the scanner says higher or lower.",
+        "level3": "22 sits at the fourth position on the list.",
+        "level4": "0-based, that's index 3."
+      }
+    },
+    {
+      "id": "sf_max_subarray",
+      "validatorKey": "sf_max_subarray",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-3",
+      "status": "active",
+      "source": "NeetCode Maximum Subarray / Kadane (Medium)",
+      "difficulty": "M1",
+      "category": "array",
+      "interaction": "numeric",
+      "prompt": "Load deltas: [-2, 4, -1, 3, -2, 2]. \"Enter the largest possible contiguous sum.\"",
+      "answer": "6",
+      "hintDigit": 6,
+      "expectedDurationSec": 75,
+      "hints": {
+        "level1": "Not every value belongs in the best run — a big enough negative can break the chain.",
+        "level2": "Track a running sum and reset it to zero whenever it goes negative.",
+        "level3": "The best run is 4, -1, 3, which sums higher than starting over elsewhere.",
+        "level4": "The max contiguous sum is 6."
+      }
+    },
+    {
+      "id": "sf_product_except_self",
+      "validatorKey": "sf_product_except_self",
+      "campaign": "san-francisco-swe",
+      "stage": "SF-3",
+      "status": "active",
+      "source": "NeetCode Product of Array Except Self (Medium)",
+      "difficulty": "M1",
+      "category": "array",
+      "interaction": "numeric",
+      "prompt": "Array [2, 3, 4]. \"Enter the value that would replace index 1 (product of all OTHER values).\"",
+      "answer": "8",
+      "hintDigit": 8,
+      "expectedDurationSec": 75,
+      "hints": {
+        "level1": "You need the product of everything except the position you're filling.",
+        "level2": "Multiply the values on either side of index 1 together.",
+        "level3": "Index 0 and index 2 hold 2 and 4.",
+        "level4": "2 × 4 = 8."
+      }
+    },
+    {
+      "id": "sf_longest_substr",
+      "validatorKey": "sf_longest_substr",
+      "campaign": "san-francisco-swe",
+      "stage": null,
+      "status": "backup",
+      "source": "NeetCode Longest Substring Without Repeating Characters (Medium)",
+      "difficulty": "M1",
+      "category": "logic",
+      "interaction": "numeric",
+      "prompt": "Corrupted key stream: A B C A B C B B. \"Enter the length of the longest run with no repeated letter.\"",
+      "answer": "3",
+      "hintDigit": null,
+      "expectedDurationSec": 75,
+      "hints": {
+        "level1": "Slide a window across the stream and shrink it the moment a letter repeats.",
+        "level2": "Track the last position you saw each letter; jump the window start past it on a repeat.",
+        "level3": "The run A, B, C has no repeats before the next A forces a reset.",
+        "level4": "The longest clean run is 3 letters long."
+      }
+    },
+    {
+      "id": "ny_coin_flip_ev",
+      "validatorKey": "ny_coin_flip_ev",
+      "campaign": "new-york-quant",
+      "stage": "NYC-2",
+      "status": "active",
+      "source": "Green Book Ch.2, expected flips to first head",
+      "difficulty": "E1",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "Terminal: \"A fair relay flips until it hits HEAD. Enter the expected number of flips.\"",
+      "answer": "2",
+      "hintDigit": 2,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "A fair coin doesn't guarantee a head on flip one.",
+        "level2": "Expected trials for a fair event is one over its probability.",
+        "level3": "1 divided by one-half.",
+        "level4": "Expected flips = 2."
+      }
+    },
+    {
+      "id": "ny_two_dice_sum7",
+      "validatorKey": "ny_two_dice_sum7",
+      "campaign": "new-york-quant",
+      "stage": "NYC-1",
+      "status": "active",
+      "source": "Green Book Ch.2, dice sum",
+      "difficulty": "E1",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "Board: two dice, 36 outcomes shown scrolling. \"Enter the number of outcomes summing to 7.\"",
+      "answer": "6",
+      "hintDigit": 6,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "List every dice pair, not just the doubles.",
+        "level2": "For each first-die value, only one second-die value makes the sum 7.",
+        "level3": "There are six such pairs, one per first-die face.",
+        "level4": "6 outcomes sum to 7."
+      }
+    },
+    {
+      "id": "ny_card_ace",
+      "validatorKey": "ny_card_ace",
+      "campaign": "new-york-quant",
+      "stage": "NYC-1",
+      "status": "active",
+      "source": "Green Book Ch.2, card draw",
+      "difficulty": "E1",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "\"A standard 52-card deck. Enter the odds of drawing an Ace, in the form denominator only (1 in ___).\"",
+      "answer": "13",
+      "hintDigit": 3,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "There are only 4 of that card in the deck.",
+        "level2": "Odds are total cards divided by favorable cards.",
+        "level3": "52 divided by 4.",
+        "level4": "1 in 13 — enter 13."
+      }
+    },
+    {
+      "id": "ny_balls_no_replace",
+      "validatorKey": "ny_balls_no_replace",
+      "campaign": "new-york-quant",
+      "stage": "NYC-2",
+      "status": "active",
+      "source": "Green Book Ch.2, conditional probability",
+      "difficulty": "E2",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "Bin: 5 blue, 3 red. \"Draw two without replacement. Enter the numerator of P(both red) over a denominator of 28.\"",
+      "answer": "6",
+      "hintDigit": 6,
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "The second draw depends on what the first draw removed.",
+        "level2": "Multiply the chance of red first by the chance of red second, given one's already gone.",
+        "level3": "3/8 on the first draw, 2/7 on the second.",
+        "level4": "3 × 2 = 6 — the numerator is 6."
+      }
+    },
+    {
+      "id": "ny_monty_reveal",
+      "validatorKey": "ny_monty_reveal",
+      "campaign": "new-york-quant",
+      "stage": "NYC-2",
+      "status": "active",
+      "source": "Green Book Ch.2, Monty Hall (simplified)",
+      "difficulty": "E2",
+      "category": "logic",
+      "interaction": "object_selection",
+      "prompt": "3 doors, player picks one, one wrong door opens. \"Should you SWITCH or STAY for better odds?\"",
+      "answer": "SWITCH",
+      "hintDigit": 1,
+      "hintDigitNote": "SWITCH -> 1, STAY -> 0",
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "Opening a wrong door doesn't touch the odds you started with.",
+        "level2": "Your original pick still only has its original 1-in-3 chance — the unopened other door absorbed the rest.",
+        "level3": "Switching wins in 2 out of 3 scenarios.",
+        "level4": "Select SWITCH."
+      }
+    },
+    {
+      "id": "ny_bayes_coin",
+      "validatorKey": "ny_bayes_coin",
+      "campaign": "new-york-quant",
+      "stage": "NYC-3",
+      "status": "active",
+      "source": "Green Book Ch.2, Bayes' theorem",
+      "difficulty": "M1",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "\"A vault holds 2 fair coins and 1 two-headed coin. You draw one at random and flip HEADS. Enter the percent chance it's the two-headed coin.\"",
+      "answer": "50",
+      "hintDigit": 0,
+      "expectedDurationSec": 75,
+      "hints": {
+        "level1": "Getting heads is more likely if you happen to be holding the two-headed coin.",
+        "level2": "Weight each coin's chance of being drawn by its chance of then landing heads.",
+        "level3": "P(heads) splits evenly between the two-headed coin's guaranteed head and the fair coins' half chance.",
+        "level4": "The two-headed coin accounts for exactly half of that total — enter 50."
+      }
+    },
+    {
+      "id": "ny_weighted_ev",
+      "validatorKey": "ny_weighted_ev",
+      "campaign": "new-york-quant",
+      "stage": "NYC-3",
+      "status": "active",
+      "source": "Green Book Ch.2/Ch.4, weighted expected value",
+      "difficulty": "M1",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "\"A trade returns +$12 (25% chance), +$2 (50% chance), or −$4 (25% chance). Enter the expected value.\"",
+      "answer": "3",
+      "hintDigit": 3,
+      "expectedDurationSec": 75,
+      "hints": {
+        "level1": "Not every outcome counts equally here — weight each by its own chance.",
+        "level2": "Multiply each dollar amount by its probability, then add the three products.",
+        "level3": "3 + 1 − 1 = 3 once you total the weighted pieces.",
+        "level4": "Expected value = 3."
+      }
+    },
+    {
+      "id": "ny_mean",
+      "validatorKey": "ny_mean",
+      "campaign": "new-york-quant",
+      "stage": null,
+      "status": "backup",
+      "source": "Green Book Ch.4, mean",
+      "difficulty": "E1",
+      "category": "math",
+      "interaction": "numeric",
+      "prompt": "Latency samples: 4, 8, 6, 10, 2. \"Enter the mean.\"",
+      "answer": "6",
+      "hintDigit": null,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Add them all up, then split evenly across how many there are.",
+        "level2": "Five samples — total them and divide by 5.",
+        "level3": "The five samples total 30.",
+        "level4": "30 ÷ 5 = 6."
+      }
+    },
+    {
+      "id": "ny_stdev_small",
+      "validatorKey": "ny_stdev_small",
+      "campaign": "new-york-quant",
+      "stage": null,
+      "status": "backup",
+      "source": "Green Book Ch.4, standard deviation",
+      "difficulty": "E2",
+      "category": "math",
+      "interaction": "numeric",
+      "prompt": "Samples: 2, 4, 4, 4, 6. \"Enter the population standard deviation.\"",
+      "answer": "1.4",
+      "hintDigit": null,
+      "expectedDurationSec": 50,
+      "note": "Non-integer answer — round the displayed target to 1 decimal, or swap in an integer-stdev dataset before shipping.",
+      "hints": {
+        "level1": "Standard deviation measures how far values sit from the average.",
+        "level2": "Find the mean, square each distance from it, then average and root that.",
+        "level3": "The average is 4, and the squared distances average out to about 1.92.",
+        "level4": "The population standard deviation rounds to 1.4."
+      }
+    },
+    {
+      "id": "ny_correlation_sign",
+      "validatorKey": "ny_correlation_sign",
+      "campaign": "new-york-quant",
+      "stage": null,
+      "status": "backup",
+      "source": "Green Book Ch.4, correlation",
+      "difficulty": "E1",
+      "category": "logic",
+      "interaction": "object_selection",
+      "prompt": "Scatter overlay: as trade volume rises, latency rises too. \"Select POSITIVE or NEGATIVE correlation.\"",
+      "answer": "POSITIVE",
+      "hintDigit": null,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Watch whether both quantities move the same direction or opposite.",
+        "level2": "If one rises whenever the other does, that's not a negative relationship.",
+        "level3": "Both volume and latency climb together on the overlay.",
+        "level4": "Select POSITIVE."
+      }
+    },
+    {
+      "id": "ny_randomwalk_ev",
+      "validatorKey": "ny_randomwalk_ev",
+      "campaign": "new-york-quant",
+      "stage": null,
+      "status": "backup",
+      "source": "Green Book Ch.3, symmetric random walk",
+      "difficulty": "E1",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "\"A fair random walk takes 10 symmetric steps of ±1. Enter the expected final position.\"",
+      "answer": "0",
+      "hintDigit": null,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Every step is equally likely to cancel out a previous one.",
+        "level2": "A fair walk has no drift — the ups and downs balance in expectation.",
+        "level3": "Over any number of fair ±1 steps, the expected displacement is unchanged from the start.",
+        "level4": "Expected final position = 0."
+      }
+    },
+    {
+      "id": "ny_randomwalk_pos",
+      "validatorKey": "ny_randomwalk_pos",
+      "campaign": "new-york-quant",
+      "stage": null,
+      "status": "backup",
+      "source": "Green Book Ch.3, random walk distribution",
+      "difficulty": "E2",
+      "category": "probability",
+      "interaction": "numeric",
+      "prompt": "\"After 4 fair ±1 steps, enter how many of the 16 equally-likely paths end at position +2.\"",
+      "answer": "4",
+      "hintDigit": null,
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "Landing at +2 after 4 steps needs a specific mix of up and down moves.",
+        "level2": "You need exactly 3 up-steps and 1 down-step, in some order.",
+        "level3": "There are 4 ways to arrange 3 ups and 1 down across 4 steps.",
+        "level4": "4 of the 16 paths end at +2."
+      }
+    },
+    {
+      "id": "ny_gauss_sum",
+      "validatorKey": "ny_gauss_sum",
+      "campaign": "new-york-quant",
+      "stage": null,
+      "status": "backup",
+      "source": "Classic \"Gauss sum 1..n\" brainteaser",
+      "difficulty": "E1",
+      "category": "math",
+      "interaction": "numeric",
+      "prompt": "\"Sum every integer from 1 to 50. Enter the total.\"",
+      "answer": "1275",
+      "hintDigit": null,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Pairing the first and last numbers gives the same total, every time.",
+        "level2": "Pair 1+50, 2+49, and so on — each pair sums the same.",
+        "level3": "25 pairs, each summing to 51.",
+        "level4": "25 × 51 = 1275."
+      }
+    },
+    {
+      "id": "ny_clock_overlap",
+      "validatorKey": "ny_clock_overlap",
+      "campaign": "new-york-quant",
+      "stage": null,
+      "status": "backup",
+      "source": "Classic clock-hands brainteaser",
+      "difficulty": "E1",
+      "category": "logic",
+      "interaction": "numeric",
+      "prompt": "\"In a 12-hour period, how many times do the hour and minute hands overlap?\"",
+      "answer": "11",
+      "hintDigit": null,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "The hands don't overlap exactly once per hour.",
+        "level2": "The minute hand laps the hour hand slightly less than 12 times in 12 hours.",
+        "level3": "They meet one fewer time than the naive hourly guess.",
+        "level4": "They overlap 11 times."
+      }
+    },
+    {
+      "id": "ny_locker_doors",
+      "validatorKey": "ny_locker_doors",
+      "campaign": "new-york-quant",
+      "stage": "NYC-3",
+      "status": "active",
+      "source": "Classic \"100 lockers\" toggle brainteaser (mini, n=20)",
+      "difficulty": "E2",
+      "category": "logic",
+      "interaction": "numeric",
+      "prompt": "\"20 doors start closed. Pass k toggles every door that's a multiple of k, for k = 1..20. Enter how many doors end open.\"",
+      "answer": "4",
+      "hintDigit": 4,
+      "expectedDurationSec": 50,
+      "hints": {
+        "level1": "A door's final state depends on how many times it gets toggled, not which passes touch it.",
+        "level2": "A door gets toggled once per divisor of its number — most numbers have an even count of divisors.",
+        "level3": "Only numbers with an odd number of divisors end open — those are the perfect squares.",
+        "level4": "1, 4, 9, and 16 stay open — that's 4 doors."
+      }
+    },
+    {
+      "id": "ny_handshakes",
+      "validatorKey": "ny_handshakes",
+      "campaign": "new-york-quant",
+      "stage": "NYC-1",
+      "status": "active",
+      "source": "Classic handshake brainteaser",
+      "difficulty": "E1",
+      "category": "math",
+      "interaction": "numeric",
+      "prompt": "\"6 traders each shake every other trader's hand exactly once. Enter the total handshakes.\"",
+      "answer": "15",
+      "hintDigit": 5,
+      "expectedDurationSec": 30,
+      "hints": {
+        "level1": "Each pair of traders shakes hands exactly once — don't double count.",
+        "level2": "Count how many unique pairs you can make from 6 people.",
+        "level3": "That's 6 choose 2.",
+        "level4": "15 handshakes."
+      }
+    }
+  ]
+}
