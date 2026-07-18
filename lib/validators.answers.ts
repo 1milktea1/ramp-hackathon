@@ -11,6 +11,12 @@ import { registerValidator, toNumber, normalizeString } from "./validators";
 import { SAN_FRANCISCO, NEW_YORK } from "./campaigns";
 import { finalCode } from "./progress";
 import { checkGuess, getSession } from "./market-game";
+import {
+  checkCard,
+  checkQuote,
+  getTickerSession,
+  type Quote,
+} from "./bayesian-ticker";
 
 /** Register a puzzle whose answer is a single number. */
 function numeric(key: string, expected: number): void {
@@ -51,6 +57,26 @@ numeric("ny_weighted_ev", 3);
 // checked against the active session's hidden roll (deterministic engine, not
 // MIRA). See lib/market-game.ts + components/puzzles/MarketMakerPuzzle.tsx.
 registerValidator("ny-finale-market", (input) => checkGuess(getSession(), input));
+
+// NYC Bayesian Ticker: per-round market containment + final exact-card guess.
+// See lib/bayesian-ticker.ts + components/puzzles/BayesianTickerPuzzle.tsx.
+// Quote input shape: { bid, ask, maxWidth } (the round's allowed width, which
+// already includes any accumulated wrong-quote penalty).
+registerValidator("ny-ticker-quote", (input) => {
+  const session = getTickerSession();
+  if (!session || typeof input !== "object" || input === null) return false;
+  const { bid, ask, maxWidth } = input as Partial<Quote> & {
+    maxWidth?: number;
+  };
+  if (![bid, ask, maxWidth].every((n) => typeof n === "number" && Number.isFinite(n))) {
+    return false;
+  }
+  return checkQuote(session.card, { bid: bid!, ask: ask! }, maxWidth!).ok;
+});
+
+registerValidator("ny-ticker-card", (input) =>
+  checkCard(getTickerSession()?.card ?? null, input)
+);
 
 // --- Finale codes (derived) ---------------------------------
 word("sf-finale-code", finalCode(SAN_FRANCISCO.scenes)); // → "577"
