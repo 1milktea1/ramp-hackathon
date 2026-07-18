@@ -4,9 +4,10 @@
 
 ## Motivation, intention & differentiation
 
-Technical interview prep today means paying for LeetCode Premium or a quant-interview course, then grinding alone for weeks — stuck with no one to ask, and no sense of the actual pressure a real interview creates. We wanted the same prep to take minutes, cost nothing, and feel like something worth finishing.
+Citywide is a fun, interactive, browser-based escape room that disguises real SWE and quant interview questions (NeetCode-style array/logic puzzles, Green Book–style probability and stats) as a cinematic 12-minute story. An AI Game Master, MIRA, watches your whole session and gives curated guidance when asked, while a fully deterministic engine decides how much to reveal.
 
-What makes it different from a themed quiz: the engine, not an AI, decides if you're right — `validate(validatorKey, input)` is the only source of truth, so the AI Game Master can never grade, unlock, or invent an answer. Hints are adaptive rather than a static answer key, computed from a pressure score (wrong attempts, idle time, time remaining) plus what the player actually asks. And the physical interactions — a webcam gesture check, a Backspace-driven puzzle — are load-bearing parts of the fiction, not gimmicks bolted on top of a Q&A form.
+Turning recruiting practice from a boring, paid, solitary grind into something people want to finish. 
+
 
 ## The game & repo
 
