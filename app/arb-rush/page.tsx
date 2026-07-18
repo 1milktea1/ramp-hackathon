@@ -1,16 +1,13 @@
 "use client";
 
 // STANDALONE HANDOFF / DEMO ROUTE for Arb Rush.
-//
-// UI teammate: restyle ArbRushGame without touching lib/arb-rush.ts.
-//
-// CAMPAIGN INTEGRATION:
-//   1. Add puzzle to NYC finale scene with validatorKey: "ny-arbrush"
-//   2. In PuzzlePanel:
-//        if (puzzle.validatorKey === "ny-arbrush")
-//          return <ArbRushGame puzzle={puzzle} />;
+// Layout matches /market-maker (wider board needs max-w-3xl).
 
+import { useState } from "react";
 import { ArbRushGame } from "@/components/puzzles/ArbRushGame";
+import {
+  QuantDevRevealButton,
+} from "@/components/puzzles/quantUi";
 import type { PuzzleDefinition } from "@/lib/types";
 
 const ARB_RUSH_PUZZLE: PuzzleDefinition = {
@@ -34,15 +31,33 @@ const ARB_RUSH_PUZZLE: PuzzleDefinition = {
 };
 
 export default function ArbRushDemoPage() {
+  const [revealed, setRevealed] = useState(false);
+
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 p-6">
       <header className="flex flex-col gap-1">
         <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
           NYC Quant Finale — reference build
         </p>
-        <h1 className="text-xl font-semibold">ARB RUSH</h1>
+        <h1 className="text-xl font-semibold">Lower Manhattan Desk — Arb Rush</h1>
       </header>
+
       <ArbRushGame puzzle={ARB_RUSH_PUZZLE} />
+
+      <div className="mt-auto flex items-center gap-3 border-t border-zinc-800 pt-3">
+        <QuantDevRevealButton
+          revealed={revealed}
+          onToggle={() => setRevealed((v) => !v)}
+          hideLabel="Hide tip (dev)"
+          showLabel="Reveal tip (dev)"
+        />
+        {revealed && (
+          <span className="font-mono text-xs text-zinc-500">
+            Sum asks &lt; 100 = buy arb · Sum bids &gt; 100 = sell arb · Cheap
+            legs can still be traps
+          </span>
+        )}
+      </div>
     </main>
   );
 }

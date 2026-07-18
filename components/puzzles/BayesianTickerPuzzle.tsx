@@ -9,16 +9,13 @@
 // quote widens the next round's requirement (the penalty). Finally the player
 // submits the exact card — one guess; a wrong answer loses.
 //
-// SEAM — UI teammate: this is logic-complete but visually plain. Restyle freely.
-// Do NOT move correctness out of the engine: quotes go through
-// validate("ny-ticker-quote", ...) and the final card through
-// validate("ny-ticker-card", ...). Keep those calls intact.
+// SEAM — UI teammate: chrome matches MarketMakerPuzzle via quantUi. Restyle
+// freely. Do NOT move correctness out of the engine.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGameStore } from "@/lib/store";
 import { emit } from "@/lib/events";
 import { validate } from "@/lib/validators";
-// Side-effect import: registers the ticker validators wherever this is mounted.
 import "@/lib/validators.answers";
 import {
   BASE_WIDTHS,
@@ -31,6 +28,21 @@ import {
   startTickerSession,
 } from "@/lib/bayesian-ticker";
 import type { PuzzleDefinition } from "@/lib/types";
+import {
+  QuantCard,
+  QuantError,
+  QuantGuessInput,
+  QuantHint,
+  QuantHistory,
+  QuantHistoryRow,
+  QuantLose,
+  QuantMarketInputs,
+  QuantPrimaryButton,
+  QuantSecondaryButton,
+  QuantTimer,
+  QuantWarn,
+  QuantWin,
+} from "@/components/puzzles/quantUi";
 
 const ROUND_SECONDS = 60;
 
@@ -61,7 +73,7 @@ function outcomeLabel(o: RoundResult["outcome"]): string {
     case "miss-both":
       return "REJECTED — too wide and it missed the value";
     case "timeout":
-      return "TIMED OUT — no market submitted";
+      return "TIMED OUT — no market submitted this round";
   }
 }
 
@@ -84,7 +96,6 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
   const [ask, setAsk] = useState("");
   const [cardGuess, setCardGuess] = useState("");
 
-  // Draw the hidden card + wires once on mount; clear on unmount.
   useEffect(() => {
     const session = startTickerSession();
     setWires(session.wires);
@@ -93,28 +104,36 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
 
   const maxWidth = maxWidthForRound(round, penaltyPoints);
 
+  const goToGuess = useCallback(() => {
+    setPhase("guess");
+    setError(null);
+  }, []);
+
   const advance = useCallback(() => {
     setBid("");
     setAsk("");
     setError(null);
     setRound((r) => {
       if (r >= TOTAL_ROUNDS) {
-        setPhase("guess");
+        goToGuess();
         return r;
       }
       setSecondsLeft(ROUND_SECONDS);
       return r + 1;
     });
-  }, []);
+  }, [goToGuess]);
 
   const recordAndAdvance = useCallback(
     (result: RoundResult, passed: boolean) => {
       setHistory((h) => [...h, result]);
       if (passed) {
-        emit("answer_submit", { puzzleId: puzzle.id, kind: "quote", round: result.round });
+        emit("answer_submit", {
+          puzzleId: puzzle.id,
+          kind: "quote",
+          round: result.round,
+        });
       } else {
         emit("wrong_attempt", { puzzleId: puzzle.id, round: result.round });
-        // Penalty: widen the next round's requirement.
         setPenaltyPoints((p) => p + WRONG_QUOTE_PENALTY);
       }
       advance();
@@ -123,7 +142,6 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
   );
 
   const timeout = useCallback(() => {
-    const session = getTickerSession();
     recordAndAdvance(
       {
         round,
@@ -135,8 +153,6 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
       },
       false
     );
-    // Reference so lint doesn't flag session; kept for clarity of intent.
-    void session;
   }, [round, wires, penaltyPoints, recordAndAdvance]);
 
   const timeoutRef = useRef(timeout);
@@ -144,7 +160,6 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
     timeoutRef.current = timeout;
   }, [timeout]);
 
-  // Per-round countdown; runs only during the quote phase.
   useEffect(() => {
     if (phase !== "quote" || solved) return;
     const id = setInterval(() => {
@@ -175,9 +190,7 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
     if (!session) throw new Error("Ticker session missing");
 
     const mw = maxWidthForRound(round, penaltyPoints);
-    // Deterministic engine gate.
     const passed = validate("ny-ticker-quote", { bid: b, ask: a, maxWidth: mw });
-    // Detail for player feedback (still from the engine, not MIRA).
     const detail = checkQuote(session.card, { bid: b, ask: a }, mw);
     const outcome: RoundResult["outcome"] = passed
       ? "ok"
@@ -188,7 +201,14 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
           : "miss-width";
 
     recordAndAdvance(
-      { round, wire: wires[round - 1] ?? "", bid: b, ask: a, maxWidth: mw, outcome },
+      {
+        round,
+        wire: wires[round - 1] ?? "",
+        bid: b,
+        ask: a,
+        maxWidth: mw,
+        outcome,
+      },
       passed
     );
   }
@@ -220,33 +240,34 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
     [bid, ask]
   );
 
+  const liveWidth = (() => {
+    const b = toInt(bid);
+    const a = toInt(ask);
+    return b !== null && a !== null ? a - b : null;
+  })();
+
   if (solved) {
     return (
-      <div className="rounded-lg border border-emerald-800/60 bg-emerald-950/20 p-4">
-        <p className="text-sm font-medium text-emerald-400">
-          Priced to the tick — the ticker unlocks. You called the card.
-        </p>
-      </div>
+      <QuantWin>Priced to the tick — the ticker unlocks. You called the card.</QuantWin>
     );
   }
 
   if (phase === "lost") {
     return (
-      <div className="rounded-lg border border-red-900/60 bg-red-950/20 p-4">
-        <p className="text-sm font-medium text-red-400">
-          Wrong card — the ticker halts. You only get one call.
-        </p>
-        {lostCard != null && (
-          <p className="mt-2 font-mono text-xs text-zinc-500">
-            The card was {lostCard} (true value {lostCard * 10}).
-          </p>
-        )}
-      </div>
+      <QuantLose
+        detail={
+          lostCard != null
+            ? `The card was ${lostCard} (true value ${lostCard * 10}).`
+            : undefined
+        }
+      >
+        Wrong card — the ticker halts. You only get one call.
+      </QuantLose>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-zinc-800 p-4">
+    <QuantCard>
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
@@ -255,134 +276,101 @@ export function BayesianTickerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
           <p className="text-sm text-zinc-200">{puzzle.prompt}</p>
         </div>
         {phase === "quote" && (
-          <span
-            className={`shrink-0 font-mono text-xs ${
-              secondsLeft <= 10 ? "text-red-400" : "text-zinc-400"
-            }`}
-          >
-            {secondsLeft}s · round {round}/{TOTAL_ROUNDS}
-          </span>
+          <QuantTimer
+            secondsLeft={secondsLeft}
+            label={`round ${round}/${TOTAL_ROUNDS}`}
+          />
         )}
       </div>
 
       {phase === "quote" && (
         <div className="flex flex-col gap-4">
-          <div className="rounded-md border border-sky-900/50 bg-sky-950/20 px-3 py-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-sky-400">
+          <QuantHint>
+            Re-quote a two-sided market that contains the asset&apos;s true value
+            (card × 10). I accept only if the value sits inside your market and
+            your width is within the round limit.
+          </QuantHint>
+
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
               News wire {round}
             </span>
-            <p className="mt-1 text-sm text-zinc-100">
-              {wires[round - 1] ?? "…"}
-            </p>
+            <p className="text-sm text-zinc-100">{wires[round - 1] ?? "…"}</p>
           </div>
 
-          <p className="text-xs text-zinc-500">
-            Re-quote a two-sided market that contains the asset&apos;s true value
-            (card x 10). This round your width must be{" "}
-            <span className="text-zinc-300">&le; {maxWidth}</span>
-            {penaltyPoints > 0 && (
-              <span className="text-amber-400">
-                {" "}
-                (base {BASE_WIDTHS[round - 1]} + {penaltyPoints} penalty)
+          <QuantMarketInputs
+            label={`Value market (width ≤ ${maxWidth}${
+              penaltyPoints > 0
+                ? ` · base ${BASE_WIDTHS[round - 1]} + ${penaltyPoints} penalty`
+                : ""
+            })`}
+            bid={bid}
+            ask={ask}
+            onBid={setBid}
+            onAsk={setAsk}
+            trailing={
+              <span className="ml-2 font-mono text-xs text-zinc-500">
+                width {liveWidth ?? "—"}
               </span>
-            )}
-            .
-          </p>
+            }
+          />
 
-          <div className="flex items-center gap-2">
-            <NumberField placeholder="bid" value={bid} onChange={setBid} />
-            <span className="text-zinc-600">@</span>
-            <NumberField placeholder="ask" value={ask} onChange={setAsk} />
-            <span className="ml-2 font-mono text-xs text-zinc-500">
-              width {(() => {
-                const b = toInt(bid);
-                const a = toInt(ask);
-                return b !== null && a !== null ? a - b : "-";
-              })()}
-            </span>
-          </div>
+          {error && <QuantError>{error}</QuantError>}
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
-
-          <div>
-            <button
-              className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 enabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
-              onClick={submitQuote}
-              disabled={!canSubmitQuote}
-            >
+          <div className="flex items-center gap-3">
+            <QuantPrimaryButton onClick={submitQuote} disabled={!canSubmitQuote}>
               Submit market
-            </button>
+            </QuantPrimaryButton>
+            <QuantSecondaryButton onClick={goToGuess}>
+              Lock in card
+            </QuantSecondaryButton>
           </div>
         </div>
       )}
 
       {phase === "guess" && (
         <div className="flex flex-col gap-3">
-          <p className="text-xs text-zinc-500">
-            Wires exhausted. Call the exact card (2-10).
-          </p>
-          <p className="text-xs font-medium text-amber-400">
-            You get one guess. A wrong answer loses the game.
-          </p>
-          <div className="flex items-center gap-3">
-            <NumberField placeholder="card" value={cardGuess} onChange={setCardGuess} />
-            <button
-              className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white"
-              onClick={submitCard}
-            >
-              Call the card
-            </button>
+          <QuantHint>Wires exhausted. Call the exact card (2–10).</QuantHint>
+          <QuantWarn>You get one guess. A wrong answer loses the game.</QuantWarn>
+          <div className="flex flex-wrap gap-3">
+            <QuantGuessInput
+              label="card"
+              value={cardGuess}
+              onChange={setCardGuess}
+            />
           </div>
-          {guessError && <p className="text-xs text-red-400">{guessError}</p>}
+          {guessError && <QuantError>{guessError}</QuantError>}
+          <div className="flex items-center gap-3">
+            <QuantPrimaryButton onClick={submitCard}>
+              Submit final guess
+            </QuantPrimaryButton>
+            {round <= TOTAL_ROUNDS && history.length > 0 && (
+              <span className="text-xs text-zinc-600">
+                {TOTAL_ROUNDS - Math.min(round, TOTAL_ROUNDS)} round(s) of
+                markets left unused
+              </span>
+            )}
+          </div>
         </div>
       )}
 
       {history.length > 0 && (
-        <div className="flex flex-col gap-2 border-t border-zinc-800 pt-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-            Round log
-          </span>
-          <ul className="flex flex-col gap-1">
-            {history.map((h, i) => (
-              <li key={i} className="text-xs text-zinc-400">
-                <span className="text-zinc-600">R{h.round}</span>{" "}
-                {h.outcome !== "timeout" && (
-                  <span className="font-mono text-zinc-500">
-                    [{h.bid}, {h.ask}] w{h.ask - h.bid}/{h.maxWidth}
-                  </span>
-                )}{" "}
-                →{" "}
-                <span
-                  className={h.outcome === "ok" ? "text-emerald-400" : "text-red-400"}
-                >
-                  {outcomeLabel(h.outcome)}
+        <QuantHistory>
+          {history.map((h, i) => (
+            <QuantHistoryRow key={i}>
+              <span className="text-zinc-600">R{h.round}</span>{" "}
+              <span className="uppercase text-zinc-500">wire</span>{" "}
+              {h.outcome !== "timeout" && (
+                <span className="font-mono text-zinc-500">
+                  [{h.bid}, {h.ask}]
                 </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+              )}{" "}
+              →{" "}
+              <span className="text-zinc-200">{outcomeLabel(h.outcome)}</span>
+            </QuantHistoryRow>
+          ))}
+        </QuantHistory>
       )}
-    </div>
-  );
-}
-
-function NumberField({
-  placeholder,
-  value,
-  onChange,
-}: {
-  placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <input
-      type="number"
-      inputMode="numeric"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-24 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-sm text-zinc-100 outline-none focus:border-zinc-500"
-    />
+    </QuantCard>
   );
 }

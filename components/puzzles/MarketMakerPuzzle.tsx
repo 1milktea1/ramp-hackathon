@@ -7,17 +7,13 @@
 // market with Buy / Sell / Hold. The player reads the feedback, then gets ONE
 // guess at the roll — a wrong guess loses the game.
 //
-// SEAM — UI teammate: this is logic-complete but visually plain. Restyle freely.
-// Do NOT move correctness out of the engine: the final guess always routes
-// through validate("ny-finale-market", guess); the GM verdicts always come from
-// evaluateMarket(). Keep those two calls intact.
+// SEAM — UI teammate: chrome lives in quantUi.tsx (shared with Bayesian Ticker
+// and Arb Rush). Do NOT move correctness out of the engine.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGameStore } from "@/lib/store";
 import { emit } from "@/lib/events";
 import { validate } from "@/lib/validators";
-// Side-effect import: registers the "ny-finale-market" validator so this puzzle
-// works wherever it is mounted, without depending on a central init file.
 import "@/lib/validators.answers";
 import {
   endSession,
@@ -30,6 +26,21 @@ import {
   type Roll,
 } from "@/lib/market-game";
 import type { PuzzleDefinition } from "@/lib/types";
+import {
+  QuantCard,
+  QuantError,
+  QuantGuessInput,
+  QuantHint,
+  QuantHistory,
+  QuantHistoryRow,
+  QuantLose,
+  QuantMarketInputs,
+  QuantPrimaryButton,
+  QuantSecondaryButton,
+  QuantTimer,
+  QuantWarn,
+  QuantWin,
+} from "@/components/puzzles/quantUi";
 
 const TOTAL_ROUNDS = 3;
 const ROUND_SECONDS = 60;
@@ -67,21 +78,17 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
   const [phase, setPhase] = useState<"markets" | "guess" | "lost">("markets");
   const [error, setError] = useState<string | null>(null);
   const [guessError, setGuessError] = useState<string | null>(null);
-  // The real roll, captured on a losing guess so it can be revealed.
   const [lostRoll, setLostRoll] = useState<Roll | null>(null);
 
-  // Market inputs (strings so the fields can be empty while typing).
   const [sumBid, setSumBid] = useState("");
   const [sumAsk, setSumAsk] = useState("");
   const [prodBid, setProdBid] = useState("");
   const [prodAsk, setProdAsk] = useState("");
 
-  // Final guess inputs.
   const [guessD6a, setGuessD6a] = useState("");
   const [guessD6b, setGuessD6b] = useState("");
   const [guessD10, setGuessD10] = useState("");
 
-  // Roll the hidden dice once when the finale mounts; clear on unmount.
   useEffect(() => {
     startSession();
     return () => endSession();
@@ -112,13 +119,11 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
     advanceRound();
   }, [round, puzzle.id, advanceRound]);
 
-  // Keep the latest forfeit handler in a ref so the interval never goes stale.
   const forfeitRef = useRef(forfeitRound);
   useEffect(() => {
     forfeitRef.current = forfeitRound;
   }, [forfeitRound]);
 
-  // Per-round countdown. Resets whenever the round changes; stops in guess phase.
   useEffect(() => {
     if (phase !== "markets" || solved) return;
     const id = setInterval(() => {
@@ -150,8 +155,9 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
       return;
     }
 
-    const sumResponse = evaluateMarket("sum", sumQuote, sessionRollOrThrow());
-    const prodResponse = evaluateMarket("product", prodQuote, sessionRollOrThrow());
+    const roll = sessionRollOrThrow();
+    const sumResponse = evaluateMarket("sum", sumQuote, roll);
+    const prodResponse = evaluateMarket("product", prodQuote, roll);
 
     setHistory((h) => [
       ...h,
@@ -181,7 +187,6 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
       return;
     }
 
-    // One guess only. Correct wins; anything else loses the game.
     emit("answer_submit", { puzzleId: puzzle.id, kind: "guess" });
     if (validate(puzzle.validatorKey, { d6a, d6b, d10 })) {
       completePuzzle(puzzle.id);
@@ -205,31 +210,28 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
 
   if (solved) {
     return (
-      <div className="rounded-lg border border-emerald-800/60 bg-emerald-950/20 p-4">
-        <p className="text-sm font-medium text-emerald-400">
-          Market cleared — you read the book correctly. The exchange reopens.
-        </p>
-      </div>
+      <QuantWin>
+        Market cleared — you read the book correctly. The exchange reopens.
+      </QuantWin>
     );
   }
 
   if (phase === "lost") {
     return (
-      <div className="rounded-lg border border-red-900/60 bg-red-950/20 p-4">
-        <p className="text-sm font-medium text-red-400">
-          Wrong call — the exchange stays locked. You only get one guess.
-        </p>
-        {lostRoll && (
-          <p className="mt-2 font-mono text-xs text-zinc-500">
-            The roll was d6={lostRoll.d6a} · d6={lostRoll.d6b} · d10={lostRoll.d10}.
-          </p>
-        )}
-      </div>
+      <QuantLose
+        detail={
+          lostRoll
+            ? `The roll was d6=${lostRoll.d6a} · d6=${lostRoll.d6b} · d10=${lostRoll.d10}.`
+            : undefined
+        }
+      >
+        Wrong call — the exchange stays locked. You only get one guess.
+      </QuantLose>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-zinc-800 p-4">
+    <QuantCard>
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
@@ -238,32 +240,29 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
           <p className="text-sm text-zinc-200">{puzzle.prompt}</p>
         </div>
         {phase === "markets" && (
-          <span
-            className={`shrink-0 font-mono text-xs ${
-              secondsLeft <= 10 ? "text-red-400" : "text-zinc-400"
-            }`}
-          >
-            {secondsLeft}s · round {round}/{TOTAL_ROUNDS}
-          </span>
+          <QuantTimer
+            secondsLeft={secondsLeft}
+            label={`round ${round}/${TOTAL_ROUNDS}`}
+          />
         )}
       </div>
 
       {phase === "markets" && (
         <div className="flex flex-col gap-4">
-          <p className="text-xs text-zinc-500">
+          <QuantHint>
             Quote a two-sided market on the sum and the product of the dice. I
             buy if your ask is too low, sell if your bid is too high, and hold if
             my value sits inside your market.
-          </p>
+          </QuantHint>
 
-          <MarketInputs
+          <QuantMarketInputs
             label="Sum market (dice range 3-22)"
             bid={sumBid}
             ask={sumAsk}
             onBid={setSumBid}
             onAsk={setSumAsk}
           />
-          <MarketInputs
+          <QuantMarketInputs
             label="Product market (dice range 1-360)"
             bid={prodBid}
             ask={prodAsk}
@@ -271,48 +270,39 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
             onAsk={setProdAsk}
           />
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && <QuantError>{error}</QuantError>}
 
           <div className="flex items-center gap-3">
-            <button
-              className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 enabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+            <QuantPrimaryButton
               onClick={submitMarkets}
               disabled={!canSubmitMarkets}
             >
               Submit markets
-            </button>
-            <button
-              className="rounded-md border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900"
-              onClick={goToGuess}
-            >
+            </QuantPrimaryButton>
+            <QuantSecondaryButton onClick={goToGuess}>
               Lock in dice
-            </button>
+            </QuantSecondaryButton>
           </div>
         </div>
       )}
 
       {phase === "guess" && (
         <div className="flex flex-col gap-3">
-          <p className="text-xs text-zinc-500">
+          <QuantHint>
             Name the roll. Each d6 is 1-6; the d10 is 1-10. The two d6s can be in
             any order.
-          </p>
-          <p className="text-xs font-medium text-amber-400">
-            You get one guess. A wrong answer loses the game.
-          </p>
+          </QuantHint>
+          <QuantWarn>You get one guess. A wrong answer loses the game.</QuantWarn>
           <div className="flex flex-wrap gap-3">
-            <GuessInput label="d6" value={guessD6a} onChange={setGuessD6a} />
-            <GuessInput label="d6" value={guessD6b} onChange={setGuessD6b} />
-            <GuessInput label="d10" value={guessD10} onChange={setGuessD10} />
+            <QuantGuessInput label="d6" value={guessD6a} onChange={setGuessD6a} />
+            <QuantGuessInput label="d6" value={guessD6b} onChange={setGuessD6b} />
+            <QuantGuessInput label="d10" value={guessD10} onChange={setGuessD10} />
           </div>
-          {guessError && <p className="text-xs text-red-400">{guessError}</p>}
+          {guessError && <QuantError>{guessError}</QuantError>}
           <div className="flex items-center gap-3">
-            <button
-              className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white"
-              onClick={submitGuess}
-            >
+            <QuantPrimaryButton onClick={submitGuess}>
               Submit final guess
-            </button>
+            </QuantPrimaryButton>
             {round <= TOTAL_ROUNDS && history.length > 0 && (
               <span className="text-xs text-zinc-600">
                 {TOTAL_ROUNDS - Math.min(round, TOTAL_ROUNDS)} round(s) of markets
@@ -324,105 +314,27 @@ export function MarketMakerPuzzle({ puzzle }: { puzzle: PuzzleDefinition }) {
       )}
 
       {history.length > 0 && (
-        <div className="flex flex-col gap-2 border-t border-zinc-800 pt-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-            Game master responses
-          </span>
-          <ul className="flex flex-col gap-1">
-            {history.map((h, i) => (
-              <li key={i} className="text-xs text-zinc-400">
-                <span className="text-zinc-600">R{h.round}</span>{" "}
-                <span className="uppercase text-zinc-500">{h.quantity}</span>{" "}
-                {h.response !== "timeout" && (
-                  <span className="font-mono text-zinc-500">
-                    [{h.bid}, {h.ask}]
-                  </span>
-                )}{" "}
-                → <span className="text-zinc-200">{RESPONSE_LABEL[h.response]}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <QuantHistory>
+          {history.map((h, i) => (
+            <QuantHistoryRow key={i}>
+              <span className="text-zinc-600">R{h.round}</span>{" "}
+              <span className="uppercase text-zinc-500">{h.quantity}</span>{" "}
+              {h.response !== "timeout" && (
+                <span className="font-mono text-zinc-500">
+                  [{h.bid}, {h.ask}]
+                </span>
+              )}{" "}
+              → <span className="text-zinc-200">{RESPONSE_LABEL[h.response]}</span>
+            </QuantHistoryRow>
+          ))}
+        </QuantHistory>
       )}
-    </div>
+    </QuantCard>
   );
 }
 
 function sessionRollOrThrow(): Roll {
-  // Re-read the live session each submit so we always evaluate against the
-  // dice rolled on mount.
   const roll = getSession();
   if (!roll) throw new Error("Market game session missing");
   return roll;
-}
-
-function MarketInputs({
-  label,
-  bid,
-  ask,
-  onBid,
-  onAsk,
-}: {
-  label: string;
-  bid: string;
-  ask: string;
-  onBid: (v: string) => void;
-  onAsk: (v: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-zinc-400">{label}</span>
-      <div className="flex items-center gap-2">
-        <NumberField placeholder="bid" value={bid} onChange={onBid} />
-        <span className="text-zinc-600">@</span>
-        <NumberField placeholder="ask" value={ask} onChange={onAsk} />
-      </div>
-    </div>
-  );
-}
-
-function NumberField({
-  placeholder,
-  value,
-  onChange,
-}: {
-  placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <input
-      type="number"
-      inputMode="numeric"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-24 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-sm text-zinc-100 outline-none focus:border-zinc-500"
-    />
-  );
-}
-
-function GuessInput({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-        {label}
-      </span>
-      <input
-        type="number"
-        inputMode="numeric"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-20 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-sm text-zinc-100 outline-none focus:border-zinc-500"
-      />
-    </label>
-  );
 }
