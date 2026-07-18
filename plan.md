@@ -57,59 +57,80 @@ Everything below is a hard requirement. If it is not on this list, it does not g
 
 ---
 
-## 3. Content Map — 3 Scenes + Planted Fourth Digits (sourced from `puzzle-bank.md`)
+## 3. Content Map — 3 Stages × 3 Questions, Hints Combine to the Final Code
 
-### Critical fix
+### Structure
 
-README finales assume **four recovered values**, but the MVP cuts scenes 4–5. Keep the 4-digit finale-PIN structure by **planting** the missing fourth value on a sponsor node card (no full puzzle). Put finale PIN entry **inside scene 3** after the principal puzzle.
+Each of the 3 scenes is now a **stage** containing **3 short questions** (not one principal puzzle). Difficulty ramps both within a stage and across stages:
 
-Every principal puzzle below is now pulled straight from `puzzle-bank.md` (Person B's OA-style, difficulty-labeled draft) instead of a one-off bespoke puzzle, so content and validators trace back to a single source. Swapping the puzzles changed the recovered digits, so **both finale PINs are recomputed from scratch** — see the ordering notes.
+| Stage | Q1 | Q2 | Q3 |
+|---|---|---|---|
+| Stage 1 | Easy | Easy | Easy |
+| Stage 2 | Easy | Easy–Medium | Easy–Medium |
+| Stage 3 | Easy–Medium | Medium | Medium |
+
+Solving all 3 questions in a stage unlocks that stage's **Hint** — a single digit (0–9). The final stage's lock is opened by entering the **3 stage hints, concatenated in order** — no separate "planted fourth digit" is needed anymore, since 3 stages naturally produce exactly the 3 digits needed for a 3-digit code. This replaces and simplifies the earlier 4-digit PIN-chain design from the previous draft.
+
+**Hint rule (same for every puzzle, so the validator logic is uniform):**
+
+```
+hint_digit(puzzle) = ones digit of the puzzle's numeric answer
+```
+
+Two answer types aren't naturally numeric — map them by convention, stated per-puzzle below:
+- Multi-choice puzzles (e.g. Monty Hall): `SWITCH` → `1`, `STAY` → `0`
+- The Backspace-compare puzzle: hint digit = number of Backspace keystrokes the player actually used to resolve the buffer
+
+```
+stage_hint = ones digit of (hint_digit(Q1) + hint_digit(Q2) + hint_digit(Q3))
+final_code = stage1_hint + stage2_hint + stage3_hint   // concatenated, not summed
+```
+
+All puzzles below are pulled from `puzzle-bank.md` (bank IDs in the table); two new Medium-tier NYC puzzles (`ny_bayes_coin`, `ny_weighted_ev`) were added there to fill the Stage 3 Medium slots, since the original bank only went up to Easy-Medium on the quant side.
+
+Non-question elements are unchanged and sit **alongside**, not instead of, the 3 questions: the cable-drag (SF Stage 1) and MetroCard swipe (NYC Stage 1) remain the non-question progression tasks; the camera open-palm check remains a gate — now placed **after Stage 3's hint is unlocked**, guarding the door into the finale room where all 3 hints get entered.
 
 ### San Francisco — System Failure (SWE)
 
-| Scene | Location | Principal puzzle (bank ID · difficulty) | Answer | Progression task |
-|---|---|---|---|---|
-| SF-1 | SoMa Transit Stop | `sf_missing_number` · **E1** — NeetCode "Missing Number": board shows `[0,1,2,4,5]`, find the gap | `3` | Drag cable into port |
-| SF-2 | Cursor Development Floor | `sf_contains_dup` · **E1** — NeetCode "Contains Duplicate": array `[4,1,9,6,1]` on terminal; arrow-nav to a duplicate, Backspace deletes it | `1` (duplicate removed) | Optional: type `C-U-R-S-O-R` if time |
-| SF-3 | OpenAI Mission Bay Node | Frequency puzzle (Single Number / Contains-Duplicate family, **E1**): unique packet `9` | `9` | Camera open-palm → then finale PIN |
+| Stage | Q | Diff | Bank ID | Category / Interaction | Prompt | Answer | Hint digit |
+|---|---|---|---|---|---|---|---|
+| 1 | Q1 | **E1** | `sf_two_sum` | `array` / `numeric` | Terminal `[2,7,11,15]`, target sum `9` → enter the sum of the two indices that work (0 + 1) | `1` | `1` |
+| 1 | Q2 | **E1** | `sf_missing_number` | `array` / `numeric` | Sequence board `[0,1,2,4,5]` → enter the missing value | `3` | `3` |
+| 1 | Q3 | **E1** | `sf_contains_dup` | `array` / `numeric` | Board `[4,1,9,6,1]` → enter the duplicated ID | `1` | `1` |
+| **1** | | | | | **Stage 1 Hint** = ones digit of (1+3+1) | | **`5`** |
+| 2 | Q1 | **E1** | `sf_best_time_stock` | `math` / `numeric` | Ramp ticker `[7,1,5,3,6]` → enter the max possible gain | `5` | `5` |
+| 2 | Q2 | **E2** | `sf_backspace_compare` | `logic` / `keyboard_sequence` | Buffer `cu#rsor` (`#` = live Backspace press) → retype it, resolving to the clean value | `crsor` | `1` (one Backspace used) |
+| 2 | Q3 | **E2** | `sf_valid_parens` | `logic` / `numeric` | Log string `( ( ) ( ) )` → enter `1` if balanced, else the 0-based index of the first break | `1` | `1` |
+| **2** | | | | | **Stage 2 Hint** = ones digit of (5+1+1) | | **`7`** |
+| 3 | Q1 | **E2** | `sf_binary_search` | `logic` / `numeric` | Sorted list `[3,9,14,22,31,40]` → enter the 0-based index of `22` | `3` | `3` |
+| 3 | Q2 | **M1** | `sf_max_subarray` | `array` / `numeric` | Load deltas `[-2,4,-1,3,-2,2]` → enter the largest contiguous sum | `6` | `6` |
+| 3 | Q3 | **M1** | `sf_product_except_self` | `array` / `numeric` | Array `[2,3,4]` → enter the value replacing index 1 (product of the other two) | `8` | `8` |
+| **3** | | | | | **Stage 3 Hint** = ones digit of (3+6+8=17) | | **`7`** |
 
-**Planted fourth value:** `sf_best_time_stock` · **E1** — NeetCode "Best Time to Buy/Sell Stock": Ramp node card shows prices `[7,1,5,3,6]`; status text asks for the max gain. No full puzzle UI, just short flavor text with the math worked in.
+**Final SF code:** Stage1 ‖ Stage2 ‖ Stage3 = `5` `7` `7` → **`577`**
 
-**Recovered values for finale:**
-
-| Label | Source | Bank ID | Value |
-|---|---|---|---|
-| INDEX | SF-1 | `sf_missing_number` | `3` |
-| BUILD | SF-2 | `sf_contains_dup` | `1` |
-| PACKET | SF-3 | (frequency, unique-packet) | `9` |
-| CAPACITY | Planted Ramp node | `sf_best_time_stock` | `5` |
-
-**Ordering note:** `BUILD → INDEX → PACKET → CAPACITY` → PIN **`1395`**
-
-**Finale interaction (end of SF-3):** after camera verification, terminal template `rollback --code ____`; engine validates `1395`.
+Camera open-palm verification gates the door into the Bay Control Center room after Stage 3's hint (`7`) unlocks; inside, the player enters `577` (fallback: type it directly if the terminal template is used instead of a keypad).
 
 ### New York — Market Lockdown (Quant)
 
-| Scene | Location | Principal puzzle (bank ID · difficulty) | Answer | Progression task |
-|---|---|---|---|---|
-| NYC-1 | 23rd Street Subway | `ny_handshakes` · **E1** — classic handshake brainteaser: "6 traders each shake every other trader's hand once" | `15` | MetroCard swipe (speed check, generous) |
-| NYC-2 | Ramp Headquarters | EV of `{2,4,6,8}` = `5` (Green Book Ch.2 fair-value family, same shape as `ny_balls_no_replace` / `ny_monty_reveal`); then bounds `4,6` | `5` then `4,6` | Dial / step NumericPuzzle |
-| NYC-3 | Midtown Market Data Floor | Sort latencies; median = `9` (Green Book Ch.4 order-statistic family, same shape as `ny_mean` / `ny_stdev_small`) | `9` | Timed-key PIN (or type PIN if TimedKey slips) |
+| Stage | Q | Diff | Bank ID | Category / Interaction | Prompt | Answer | Hint digit |
+|---|---|---|---|---|---|---|---|
+| 1 | Q1 | **E1** | `ny_two_dice_sum7` | `probability` / `numeric` | Two dice, 36 outcomes → enter how many sum to `7` | `6` | `6` |
+| 1 | Q2 | **E1** | `ny_card_ace` | `probability` / `numeric` | 52-card deck → enter the denominator of "1 in ___" odds of an Ace | `13` | `3` |
+| 1 | Q3 | **E1** | `ny_handshakes` | `math` / `numeric` | 6 traders each shake every other trader's hand once → enter total handshakes | `15` | `5` |
+| **1** | | | | | **Stage 1 Hint** = ones digit of (6+3+5) | | **`4`** |
+| 2 | Q1 | **E1** | `ny_coin_flip_ev` | `probability` / `numeric` | Fair coin flipped until HEAD → enter expected number of flips | `2` | `2` |
+| 2 | Q2 | **E2** | `ny_balls_no_replace` | `probability` / `numeric` | Bin `5 blue, 3 red`, draw 2 without replacement → enter numerator of P(both red) over denominator 28 | `6` | `6` |
+| 2 | Q3 | **E2** | `ny_monty_reveal` | `logic` / `object_selection` | 3 doors, one wrong door opens → `SWITCH` or `STAY`? | `SWITCH` | `1` (SWITCH=1, STAY=0) |
+| **2** | | | | | **Stage 2 Hint** = ones digit of (2+6+1) | | **`9`** |
+| 3 | Q1 | **E2** | `ny_locker_doors` | `logic` / `numeric` | 20 doors, pass `k` toggles multiples of `k` for `k=1..20` → enter how many end open | `4` | `4` |
+| 3 | Q2 | **M1** | `ny_bayes_coin` | `probability` / `numeric` | Vault: 2 fair coins + 1 two-headed; draw random coin, flip HEADS → enter % chance it's the two-headed coin | `50` | `0` |
+| 3 | Q3 | **M1** | `ny_weighted_ev` | `probability` / `numeric` | Trade returns `+$12` (25%), `+$2` (50%), `−$4` (25%) → enter the expected value | `3` | `3` |
+| **3** | | | | | **Stage 3 Hint** = ones digit of (4+0+3) | | **`7`** |
 
-**Planted fourth value:** `ny_locker_doors` · **E2** — classic "100 lockers" toggle brainteaser (mini, n=20 doors, k=1..20 toggles) on an OpenAI/Cursor node card in NYC-3. No full puzzle UI — status text states the setup and the worked answer (perfect squares ≤20 stay open).
+**Final NYC code:** Stage1 ‖ Stage2 ‖ Stage3 = `4` `9` `7` → **`497`**
 
-**Recovered values for finale:**
-
-| Label | Source | Bank ID | Value |
-|---|---|---|---|
-| A | NYC-1 handshake answer − 10 | `ny_handshakes` | `5` |
-| B | Ramp fair value | (EV family) | `5` |
-| C | Median latency | (order-statistic family) | `9` |
-| D | Planted locker-doors count | `ny_locker_doors` | `4` |
-
-**Finale board:** `A,B,C,D` → PIN **`5594`**
-
-**Finale interaction (end of NYC-3):** TimedKey sweeping columns; fallback = type `5594` in a terminal. Keyboard-beyond-typing is already satisfied by SF-2 Backspace if TimedKey is cut.
+MetroCard-speed swipe (Stage 1, non-question) and the TimedKey sweep (Stage 3 finale, or type-`497` fallback) are unchanged in mechanic — only the source of the digits changed.
 
 ---
 
@@ -271,17 +292,32 @@ validate(validatorKey: string, input: unknown): boolean
 
 Hardcoded answers by puzzle / validator key. Unit-testable with Vitest; no UI required.
 
-| validatorKey | Expected |
-|---|---|
-| `sf1-missing-number` | `3` |
-| `sf2-no-duplicates` | array has no duplicate values (start `[4,1,9,6,1]`, drop one `1`) |
-| `sf3-unique-packet` | `9` |
-| `sf-finale-pin` | `1395` |
-| `nyc1-handshakes` | `15` |
-| `nyc2-ev` | `5` |
-| `nyc2-bounds` | `{ low: 4, high: 6 }` |
-| `nyc3-median` | `9` |
-| `nyc-finale-pin` | `5594` |
+Validator keys reuse the bank IDs directly from §3 / `puzzle-bank.md` — no separate naming scheme needed.
+
+| validatorKey | Expected | Stage | Hint digit |
+|---|---|---|---|
+| `sf_two_sum` | `1` | SF-1 | `1` |
+| `sf_missing_number` | `3` | SF-1 | `3` |
+| `sf_contains_dup` | `1` | SF-1 | `1` |
+| `sf_best_time_stock` | `5` | SF-2 | `5` |
+| `sf_backspace_compare` | `crsor` (resolved buffer) | SF-2 | `1` |
+| `sf_valid_parens` | `1` | SF-2 | `1` |
+| `sf_binary_search` | `3` | SF-3 | `3` |
+| `sf_max_subarray` | `6` | SF-3 | `6` |
+| `sf_product_except_self` | `8` | SF-3 | `8` |
+| `sf-finale-code` | `577` | SF finale | — |
+| `ny_two_dice_sum7` | `6` | NYC-1 | `6` |
+| `ny_card_ace` | `13` | NYC-1 | `3` |
+| `ny_handshakes` | `15` | NYC-1 | `5` |
+| `ny_coin_flip_ev` | `2` | NYC-2 | `2` |
+| `ny_balls_no_replace` | `6` | NYC-2 | `6` |
+| `ny_monty_reveal` | `SWITCH` | NYC-2 | `1` |
+| `ny_locker_doors` | `4` | NYC-3 | `4` |
+| `ny_bayes_coin` | `50` | NYC-3 | `0` |
+| `ny_weighted_ev` | `3` | NYC-3 | `3` |
+| `ny-finale-code` | `497` | NYC finale | — |
+
+`validate("sf-finale-code", input)` and `validate("ny-finale-code", input)` don't need their own hardcoded digits baked in twice — compute the expected code at runtime as `stage1Hint + stage2Hint + stage3Hint` from the store's already-validated per-puzzle answers, so the two never drift apart. The `577` / `497` values above are the worked answer for reference and testing only.
 
 Full prompts, flavor text, and hint-level copy for each `validatorKey` above live in `puzzle-bank.md`.
 
@@ -368,7 +404,7 @@ MIRA may explain, hint, encourage, direct attention. MIRA may **not** unlock sce
 
 - Implement primitives in §6
 - `validators.ts` + Vitest
-- Six scene JSON files: hotspots, clues, prompts, hints L1–L4, planted fourth digits, PIN chains
+- Six scene JSON files: hotspots, clues, prompts, hints L1–L4, the 9-question-per-campaign content and stage-hint digits, finale codes
 - Wire puzzle complete → `emitGameEvent` → scene / finale transition
 
 **Independence:** build puzzles on standalone routes; drop into shell when A is ready.
@@ -468,8 +504,9 @@ H0.5 types+deploy
 - [ ] Kill AI API key → MIRA degrades to static hints; game still completable
 - [ ] Ask MIRA “what is an index?” mid SF-1 → concept answer, no spoiler
 - [ ] 3 wrong answers + idle ~60s → unsolicited Level 2+ nudge
-- [ ] Final PIN `1395` validates; wrong PIN does not
-- [ ] NYC PIN `5594` validates if campaign is in the demo path
+- [ ] All 9 SF questions (3 per stage) validate individually and each stage's hint digit computes correctly
+- [ ] Final SF code `577` (3 stage hints concatenated) validates; wrong code does not
+- [ ] NYC code `497` validates the same way if campaign is in the demo path
 - [ ] Shift+D can skip / jump / add time for the live walkthrough
 
-**Judge script (lock at H4.5):** cold load → SF → debug skips as needed → show camera + Space → kill API key → static hints → reject bad PIN → enter `1395` → win.
+**Judge script (lock at H4.5):** cold load → SF → debug skips as needed → show camera + Space → kill API key → static hints → reject bad code → enter `577` → win.
