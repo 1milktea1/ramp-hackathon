@@ -13,6 +13,7 @@ import { DigitTray } from "../system/DigitTray";
 import { MiraCaption } from "../game-master/MiraCaption";
 import { PuzzleModal } from "../puzzles/PuzzleModal";
 import { FinalePanel } from "../campaign/FinalePanel";
+import { MarketMakerFinale } from "../puzzles/MarketMakerFinale";
 
 export function SceneShell({
   campaign,
@@ -39,6 +40,7 @@ export function SceneShell({
   const viewIndex = VIEW_ORDER.indexOf(view);
   const stageSolved = isStageSolved(scene, completedPuzzleIds);
   const isLastScene = sceneIndex === campaign.scenes.length - 1;
+  const isNycFinale = campaign.id === "new-york-quant";
 
   // --- Timer -------------------------------------------------
   useEffect(() => {
@@ -52,6 +54,19 @@ export function SceneShell({
     emit("scene_enter", { sceneId: scene.id });
     setCaption(`${scene.title}. Three terminals here — turn to find them all.`);
   }, [scene.id, scene.title]);
+
+  // DebugMenu can jump straight into the NYC exchange finale.
+  useEffect(() => {
+    if (!isNycFinale) return;
+    const open = () => {
+      setFinaleOpen(true);
+      setCaption(
+        "Lower Manhattan Exchange. Make markets — I'll answer Buy, Sell, or Hold."
+      );
+    };
+    window.addEventListener("debug-open-nyc-finale", open);
+    return () => window.removeEventListener("debug-open-nyc-finale", open);
+  }, [isNycFinale]);
 
   const rotate = useCallback(
     (delta: number) => {
@@ -81,10 +96,13 @@ export function SceneShell({
 
     const nowComplete = [...completedPuzzleIds, puzzleId];
     if (isStageSolved(scene, nowComplete)) {
+      const endLine = isLastScene
+        ? isNycFinale
+          ? "Digit tray complete — enter the exchange for the market-maker finale."
+          : "That completes the code."
+        : "Moving to the next location.";
       setCaption(
-        `Stage clear. Recovered digit: ${stageHint(scene)}. ${
-          isLastScene ? "That completes the code." : "Moving to the next location."
-        }`
+        `Stage clear. Recovered digit: ${stageHint(scene)}. ${endLine}`
       );
     } else {
       setCaption("Logged. Two more terminals on this floor.");
@@ -135,12 +153,15 @@ export function SceneShell({
           />
         )}
 
-        {finaleOpen && (
-          <FinalePanel
-            campaignId={campaign.id}
-            onClose={() => setFinaleOpen(false)}
-          />
-        )}
+        {finaleOpen &&
+          (isNycFinale ? (
+            <MarketMakerFinale onClose={() => setFinaleOpen(false)} />
+          ) : (
+            <FinalePanel
+              campaignId={campaign.id}
+              onClose={() => setFinaleOpen(false)}
+            />
+          ))}
       </div>
 
       <footer
@@ -161,10 +182,17 @@ export function SceneShell({
           )}
           {stageSolved && isLastScene && (
             <button
-              onClick={() => setFinaleOpen(true)}
+              onClick={() => {
+                setFinaleOpen(true);
+                if (isNycFinale) {
+                  setCaption(
+                    "Lower Manhattan Exchange. Make markets — I'll answer Buy, Sell, or Hold."
+                  );
+                }
+              }}
               className="px-btn px-3 py-2 text-[10px]"
             >
-              Enter final code ▶
+              {isNycFinale ? "Enter the exchange ▶" : "Enter final code ▶"}
             </button>
           )}
           <button

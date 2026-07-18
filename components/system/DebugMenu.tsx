@@ -141,11 +141,30 @@ export function DebugMenu() {
         >
           Full reset
         </button>
+        {campaignId === "new-york-quant" ? (
+          <button
+            type="button"
+            className="px-btn col-span-2 px-2 py-1.5 text-[10px]"
+            onClick={() => {
+              if (!campaign) return;
+              for (const sc of campaign.scenes) {
+                for (const id of sc.requiredPuzzleIds) completePuzzle(id);
+              }
+              setSceneIndex(campaign.scenes.length - 1);
+              window.dispatchEvent(new CustomEvent("debug-open-nyc-finale"));
+              setOpen(false);
+            }}
+          >
+            Jump to exchange finale
+          </button>
+        ) : null}
       </div>
 
       {campaign ? (
         <p className="mt-3 text-[10px]" style={{ color: "var(--dim)" }}>
-          Finale code: {finalCode(campaign.scenes)}
+          {campaign.id === "new-york-quant"
+            ? "NYC finale: market-maker (Shift+D → skip stages, then Enter exchange)"
+            : `Finale code: ${finalCode(campaign.scenes)}`}
         </p>
       ) : null}
     </div>

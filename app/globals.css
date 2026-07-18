@@ -91,7 +91,42 @@ body {
   outline-offset: 2px;
 }
 
-/* Respect reduced-motion: the slide transition is the only real motion. */
+/* --- Market-maker dice -------------------------------------- */
+
+.dice-face {
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+.dice-tumble {
+  animation: dice-tumble 0.35s steps(2) infinite;
+}
+
+.dice-lit {
+  animation: dice-glow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes dice-tumble {
+  0% {
+    transform: rotate(-8deg) translateY(0);
+  }
+  50% {
+    transform: rotate(10deg) translateY(-4px);
+  }
+  100% {
+    transform: rotate(-6deg) translateY(2px);
+  }
+}
+
+@keyframes dice-glow {
+  from {
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  }
+  to {
+    box-shadow: 0 0 12px rgba(125, 224, 141, 0.45);
+  }
+}
+
+/* Respect reduced-motion: keep slide/dice subtle. */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
