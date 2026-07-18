@@ -1,127 +1,180 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { emit } from "@/lib/events";
+import { useCallback, useEffect, useState } from "react";
+import type { CampaignDefinition, PuzzleDefinition } from "@/lib/types";
+import { VIEW_ORDER } from "@/lib/campaigns";
+import { isStageSolved, stageHint } from "@/lib/progress";
 import { useGameStore } from "@/lib/store";
-import type { HotspotDefinition, SceneDefinition } from "@/lib/types";
-import { Hotspot } from "./Hotspot";
-import { adjacentView, NavigationArrows } from "./NavigationArrows";
-import { ObjectModal } from "./ObjectModal";
+import { emit } from "@/lib/events";
 import { PanoramaView } from "./PanoramaView";
+import { NavigationArrows } from "./NavigationArrows";
+import { TopBar } from "../system/TopBar";
+import { DigitTray } from "../system/DigitTray";
+import { MiraCaption } from "../game-master/MiraCaption";
+import { PuzzleModal } from "../puzzles/PuzzleModal";
+import { FinalePanel } from "../campaign/FinalePanel";
 
-type SceneShellProps = {
-  scene: SceneDefinition;
-  /** Fired when every requiredPuzzleId is in completedPuzzleIds. */
-  onStageComplete?: () => void;
-};
-
-/**
- * Renders any SceneDefinition: panorama, hotspots, modal, keyboard nav.
- * Puzzle primitives are Person B's — ObjectModal provides a stub input until then.
- */
-export function SceneShell({ scene, onStageComplete }: SceneShellProps) {
+export function SceneShell({
+  campaign,
+  onExit,
+}: {
+  campaign: CampaignDefinition;
+  onExit: () => void;
+}) {
   const view = useGameStore((s) => s.view);
   const setView = useGameStore((s) => s.setView);
-  const discoveredHotspots = useGameStore((s) => s.discoveredHotspots);
+  const sceneIndex = useGameStore((s) => s.sceneIndex);
+  const setSceneIndex = useGameStore((s) => s.setSceneIndex);
   const completedPuzzleIds = useGameStore((s) => s.completedPuzzleIds);
-  const discoverHotspot = useGameStore((s) => s.discoverHotspot);
+  const completePuzzle = useGameStore((s) => s.completePuzzle);
+  const timeRemainingSec = useGameStore((s) => s.timeRemainingSec);
+  const tickTimer = useGameStore((s) => s.tickTimer);
+  const status = useGameStore((s) => s.status);
 
-  const [activeHotspot, setActiveHotspot] = useState<HotspotDefinition | null>(
-    null
-  );
+  const [openPuzzle, setOpenPuzzle] = useState<PuzzleDefinition | null>(null);
+  const [caption, setCaption] = useState<string | null>(null);
+  const [finaleOpen, setFinaleOpen] = useState(false);
 
-  const puzzlesById = useMemo(() => {
-    const map = new Map(scene.puzzles.map((p) => [p.id, p]));
-    return map;
-  }, [scene.puzzles]);
+  const scene = campaign.scenes[sceneIndex];
+  const viewIndex = VIEW_ORDER.indexOf(view);
+  const stageSolved = isStageSolved(scene, completedPuzzleIds);
+  const isLastScene = sceneIndex === campaign.scenes.length - 1;
 
-  const activePuzzle = activeHotspot?.puzzleId
-    ? puzzlesById.get(activeHotspot.puzzleId) ?? null
-    : null;
+  // --- Timer -------------------------------------------------
+  useEffect(() => {
+    if (status !== "playing") return;
+    const id = window.setInterval(() => tickTimer(1), 1000);
+    return () => window.clearInterval(id);
+  }, [status, tickTimer]);
 
-  const visibleHotspots = scene.hotspots.filter((h) => h.view === view);
-
-  // Emit scene_enter once per scene id mount.
+  // --- Scene entry -------------------------------------------
   useEffect(() => {
     emit("scene_enter", { sceneId: scene.id });
-  }, [scene.id]);
+    setCaption(`${scene.title}. Three terminals here — turn to find them all.`);
+  }, [scene.id, scene.title]);
 
-  // Keyboard: arrows / A-D look around; Escape closes modal.
+  const rotate = useCallback(
+    (delta: number) => {
+      const next = viewIndex + delta;
+      if (next < 0 || next >= VIEW_ORDER.length) return;
+      setView(VIEW_ORDER[next]);
+    },
+    [viewIndex, setView]
+  );
+
+  // --- Keyboard rotation -------------------------------------
+  // Suspended whenever a puzzle/finale owns the keyboard, otherwise arrow-key
+  // input inside a terminal would also spin the room.
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setActiveHotspot(null);
-        return;
-      }
-      // Don't steal keys while typing in an input.
-      const tag = (event.target as HTMLElement | null)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-      if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") {
-        const next = adjacentView(view, -1);
-        if (next) setView(next);
-      }
-      if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") {
-        const next = adjacentView(view, 1);
-        if (next) setView(next);
-      }
+    if (openPuzzle || finaleOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") rotate(-1);
+      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") rotate(1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, setView]);
+  }, [openPuzzle, finaleOpen, rotate]);
 
-  // Advance when all required puzzles for this scene are done.
-  useEffect(() => {
-    const done = scene.requiredPuzzleIds.every((id) =>
-      completedPuzzleIds.includes(id)
-    );
-    if (done) onStageComplete?.();
-  }, [completedPuzzleIds, scene.requiredPuzzleIds, onStageComplete]);
+  function handleSolved(puzzleId: string) {
+    completePuzzle(puzzleId);
+    setOpenPuzzle(null);
 
-  const selectHotspot = (hotspot: HotspotDefinition) => {
-    if (!discoveredHotspots.includes(hotspot.id)) {
-      discoverHotspot(hotspot.id);
-      emit("hotspot_discover", { hotspotId: hotspot.id, sceneId: scene.id });
+    const nowComplete = [...completedPuzzleIds, puzzleId];
+    if (isStageSolved(scene, nowComplete)) {
+      setCaption(
+        `Stage clear. Recovered digit: ${stageHint(scene)}. ${
+          isLastScene ? "That completes the code." : "Moving to the next location."
+        }`
+      );
+    } else {
+      setCaption("Logged. Two more terminals on this floor.");
     }
-    setActiveHotspot(hotspot);
-  };
+  }
+
+  function advance() {
+    if (isLastScene) return;
+    setSceneIndex(sceneIndex + 1);
+  }
 
   return (
-    <div className="relative h-full w-full">
-      <PanoramaView
-        view={view}
-        backgrounds={scene.backgrounds}
-        transitionMs={scene.transition.durationMs || 300}
-      >
-        {visibleHotspots.map((hotspot) => (
-          <Hotspot
-            key={hotspot.id}
-            hotspot={hotspot}
-            completed={
-              !!hotspot.puzzleId &&
-              completedPuzzleIds.includes(hotspot.puzzleId)
-            }
-            onSelect={selectHotspot}
-          />
-        ))}
-        <NavigationArrows view={view} onChange={setView} />
-      </PanoramaView>
+    <div
+      className="flex h-full flex-col"
+      data-campaign={campaign.id}
+      style={{ background: "var(--ink)" }}
+    >
+      <TopBar
+        campaign={campaign}
+        scene={scene}
+        sceneIndex={sceneIndex}
+        timeRemainingSec={timeRemainingSec}
+        onExit={onExit}
+      />
 
-      <div className="pointer-events-none absolute left-4 top-4 z-20 rounded bg-black/55 px-3 py-2 backdrop-blur">
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-400">
-          {scene.locationLabel}
-        </p>
-        <p className="text-sm font-medium text-white">{scene.title}</p>
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        <PanoramaView
+          scene={scene}
+          view={view}
+          completedPuzzleIds={completedPuzzleIds}
+          onOpenPuzzle={(p) => setOpenPuzzle(p)}
+        />
+
+        <NavigationArrows
+          onLeft={() => rotate(-1)}
+          onRight={() => rotate(1)}
+          canLeft={viewIndex > 0}
+          canRight={viewIndex < VIEW_ORDER.length - 1}
+        />
+
+        <MiraCaption message={caption} onDismiss={() => setCaption(null)} />
+
+        {openPuzzle && (
+          <PuzzleModal
+            puzzle={openPuzzle}
+            onSolved={handleSolved}
+            onClose={() => setOpenPuzzle(null)}
+          />
+        )}
+
+        {finaleOpen && (
+          <FinalePanel
+            campaignId={campaign.id}
+            onClose={() => setFinaleOpen(false)}
+          />
+        )}
       </div>
 
-      {activeHotspot ? (
-        <ObjectModal
-          title={activeHotspot.label}
-          puzzle={activePuzzle}
-          onClose={() => setActiveHotspot(null)}
-          onSolved={() => setActiveHotspot(null)}
+      <footer
+        className="flex items-center justify-between gap-4 border-t-2 px-4 py-2"
+        style={{ borderColor: "var(--edge)" }}
+      >
+        <DigitTray
+          scenes={campaign.scenes}
+          completedPuzzleIds={completedPuzzleIds}
+          currentSceneIndex={sceneIndex}
         />
-      ) : null}
+
+        <div className="flex gap-2">
+          {stageSolved && !isLastScene && (
+            <button onClick={advance} className="px-btn px-3 py-2 text-[10px]">
+              Next location ▶
+            </button>
+          )}
+          {stageSolved && isLastScene && (
+            <button
+              onClick={() => setFinaleOpen(true)}
+              className="px-btn px-3 py-2 text-[10px]"
+            >
+              Enter final code ▶
+            </button>
+          )}
+          <button
+            onClick={() => emit("hint_request", { sceneId: scene.id })}
+            className="px-btn px-3 py-2 text-[10px]"
+          >
+            Request hint
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }

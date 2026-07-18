@@ -120,17 +120,21 @@ Camera open-palm verification gates the door into the Bay Control Center room af
 | 1 | Q3 | **E1** | `ny_handshakes` | `math` / `numeric` | 6 traders each shake every other trader's hand once → enter total handshakes | `15` | `5` |
 | **1** | | | | | **Stage 1 Hint** = ones digit of (6+3+5) | | **`4`** |
 | 2 | Q1 | **E1** | `ny_coin_flip_ev` | `probability` / `numeric` | Fair coin flipped until HEAD → enter expected number of flips | `2` | `2` |
-| 2 | Q2 | **E2** | `ny_balls_no_replace` | `probability` / `numeric` | Bin `5 blue, 3 red`, draw 2 without replacement → enter numerator of P(both red) over denominator 28 | `6` | `6` |
+| 2 | Q2 | **E2** | `ny_balls_no_replace` | `probability` / `numeric` | Bin `5 blue, 3 red`, draw 2 without replacement → enter numerator of P(both red) over denominator 28 | `3` | `3` |
 | 2 | Q3 | **E2** | `ny_monty_reveal` | `logic` / `object_selection` | 3 doors, one wrong door opens → `SWITCH` or `STAY`? | `SWITCH` | `1` (SWITCH=1, STAY=0) |
-| **2** | | | | | **Stage 2 Hint** = ones digit of (2+6+1) | | **`9`** |
+| **2** | | | | | **Stage 2 Hint** = ones digit of (2+3+1) | | **`6`** |
 | 3 | Q1 | **E2** | `ny_locker_doors` | `logic` / `numeric` | 20 doors, pass `k` toggles multiples of `k` for `k=1..20` → enter how many end open | `4` | `4` |
 | 3 | Q2 | **M1** | `ny_bayes_coin` | `probability` / `numeric` | Vault: 2 fair coins + 1 two-headed; draw random coin, flip HEADS → enter % chance it's the two-headed coin | `50` | `0` |
 | 3 | Q3 | **M1** | `ny_weighted_ev` | `probability` / `numeric` | Trade returns `+$12` (25%), `+$2` (50%), `−$4` (25%) → enter the expected value | `3` | `3` |
 | **3** | | | | | **Stage 3 Hint** = ones digit of (4+0+3) | | **`7`** |
 
-**Final NYC code:** Stage1 ‖ Stage2 ‖ Stage3 = `4` `9` `7` → **`497`**
+**Final NYC code:** Stage1 ‖ Stage2 ‖ Stage3 = `4` `6` `7` → **`467`**
 
-MetroCard-speed swipe (Stage 1, non-question) and the TimedKey sweep (Stage 3 finale, or type-`497` fallback) are unchanged in mechanic — only the source of the digits changed.
+> **Correction (was `497`).** `P(both red) = (3/8)(2/7) = 6/56 = 3/28`. Over the stated
+> denominator `28` the numerator is `3`, not `6` (`6` is the numerator over `56`).
+> Answer `3` → hint digit `3` → Stage 2 hint `2+3+1 = 6`. NYC final code is **`467`**.
+
+MetroCard-speed swipe (Stage 1, non-question) and the TimedKey sweep (Stage 3 finale, or type-`467` fallback) are unchanged in mechanic — only the source of the digits changed.
 
 ---
 
@@ -310,14 +314,14 @@ Validator keys reuse the bank IDs directly from §3 / `puzzle-bank.md` — no se
 | `ny_card_ace` | `13` | NYC-1 | `3` |
 | `ny_handshakes` | `15` | NYC-1 | `5` |
 | `ny_coin_flip_ev` | `2` | NYC-2 | `2` |
-| `ny_balls_no_replace` | `6` | NYC-2 | `6` |
+| `ny_balls_no_replace` | `3` | NYC-2 | `3` |
 | `ny_monty_reveal` | `SWITCH` | NYC-2 | `1` |
 | `ny_locker_doors` | `4` | NYC-3 | `4` |
 | `ny_bayes_coin` | `50` | NYC-3 | `0` |
 | `ny_weighted_ev` | `3` | NYC-3 | `3` |
-| `ny-finale-code` | `497` | NYC finale | — |
+| `ny-finale-code` | `467` | NYC finale | — |
 
-`validate("sf-finale-code", input)` and `validate("ny-finale-code", input)` don't need their own hardcoded digits baked in twice — compute the expected code at runtime as `stage1Hint + stage2Hint + stage3Hint` from the store's already-validated per-puzzle answers, so the two never drift apart. The `577` / `497` values above are the worked answer for reference and testing only.
+`validate("sf-finale-code", input)` and `validate("ny-finale-code", input)` don't need their own hardcoded digits baked in twice — compute the expected code at runtime as `stage1Hint + stage2Hint + stage3Hint` from the store's already-validated per-puzzle answers, so the two never drift apart. The `577` / `467` values above are the worked answer for reference and testing only.
 
 Full prompts, flavor text, and hint-level copy for each `validatorKey` above live in `puzzle-bank.md`.
 
@@ -506,7 +510,7 @@ H0.5 types+deploy
 - [ ] 3 wrong answers + idle ~60s → unsolicited Level 2+ nudge
 - [ ] All 9 SF questions (3 per stage) validate individually and each stage's hint digit computes correctly
 - [ ] Final SF code `577` (3 stage hints concatenated) validates; wrong code does not
-- [ ] NYC code `497` validates the same way if campaign is in the demo path
+- [ ] NYC code `467` validates the same way if campaign is in the demo path
 - [ ] Shift+D can skip / jump / add time for the live walkthrough
 
 **Judge script (lock at H4.5):** cold load → SF → debug skips as needed → show camera + Space → kill API key → static hints → reject bad code → enter `577` → win.

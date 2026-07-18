@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FINALE_CODE_REFERENCE, getCampaign } from "@/lib/campaigns";
+import { getCampaign } from "@/lib/campaigns";
 import { emit } from "@/lib/events";
+import { finalCode } from "@/lib/progress";
 import { useGameStore } from "@/lib/store";
 
-/**
- * Judge / developer menu. Toggle with Shift+D (plan.md §2 / §8).
- * Does not unlock puzzles via MIRA — only via explicit debug actions.
- */
+/** Judge / developer menu. Toggle with Shift+D (plan.md §2 / §8). */
 export function DebugMenu() {
   const [open, setOpen] = useState(false);
 
@@ -26,7 +24,6 @@ export function DebugMenu() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.shiftKey && (event.key === "D" || event.key === "d")) {
-        // Avoid toggling while typing in inputs unless menu already open.
         const tag = (event.target as HTMLElement | null)?.tagName;
         if (!open && (tag === "INPUT" || tag === "TEXTAREA")) return;
         event.preventDefault();
@@ -46,21 +43,30 @@ export function DebugMenu() {
   );
 
   return (
-    <div className="absolute bottom-4 left-4 z-50 w-72 rounded-lg border border-fuchsia-400/40 bg-zinc-950/95 p-3 text-left shadow-xl backdrop-blur">
+    <div
+      className="fixed bottom-4 left-4 z-50 w-72 p-3"
+      style={{
+        border: "2px solid #c084fc",
+        background: "rgba(11,14,20,0.96)",
+      }}
+    >
       <div className="mb-2 flex items-center justify-between">
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-fuchsia-300">
-          Debug · Shift+D
+        <p
+          className="text-[10px] tracking-[0.25em]"
+          style={{ color: "#c084fc" }}
+        >
+          DEBUG · SHIFT+D
         </p>
         <button
           type="button"
-          className="text-xs text-zinc-400 hover:text-white"
+          className="px-btn px-2 py-1 text-[9px]"
           onClick={() => setOpen(false)}
         >
           Close
         </button>
       </div>
 
-      <div className="mb-3 space-y-1 font-mono text-[11px] text-zinc-400">
+      <div className="mb-3 space-y-1 text-[11px]" style={{ color: "var(--dim)" }}>
         <p>status: {status}</p>
         <p>campaign: {campaignId ?? "—"}</p>
         <p>
@@ -71,23 +77,16 @@ export function DebugMenu() {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
-          onClick={() => tickTimer(-60)}
-        >
+        <button type="button" className="px-btn px-2 py-1.5 text-[10px]" onClick={() => tickTimer(-60)}>
           +60s
         </button>
         <button
           type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
+          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() => {
             if (!nextIncomplete) return;
             completePuzzle(nextIncomplete);
-            emit("puzzle_complete", {
-              puzzleId: nextIncomplete,
-              debug: true,
-            });
+            emit("puzzle_complete", { puzzleId: nextIncomplete, debug: true });
           }}
           disabled={!nextIncomplete}
         >
@@ -95,11 +94,10 @@ export function DebugMenu() {
         </button>
         <button
           type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
+          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() => {
             if (!campaign) return;
-            const next = Math.min(sceneIndex + 1, campaign.scenes.length - 1);
-            setSceneIndex(next);
+            setSceneIndex(Math.min(sceneIndex + 1, campaign.scenes.length - 1));
           }}
           disabled={!campaign}
         >
@@ -107,7 +105,7 @@ export function DebugMenu() {
         </button>
         <button
           type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
+          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() => setSceneIndex(sceneIndex)}
           disabled={!campaign}
         >
@@ -115,14 +113,14 @@ export function DebugMenu() {
         </button>
         <button
           type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
+          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() => addItem("debug-access-card")}
         >
           Grant item
         </button>
         <button
           type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
+          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() =>
             emit("mira_trigger", { reason: "debug_menu", sceneId: scene?.id })
           }
@@ -131,23 +129,23 @@ export function DebugMenu() {
         </button>
         <button
           type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
+          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() => setStatus("won")}
         >
           Force win
         </button>
         <button
           type="button"
-          className="rounded border border-white/15 px-2 py-1.5 text-xs hover:bg-white/5"
+          className="px-btn px-2 py-1.5 text-[10px]"
           onClick={() => reset()}
         >
           Full reset
         </button>
       </div>
 
-      {campaignId ? (
-        <p className="mt-3 font-mono text-[10px] text-zinc-500">
-          Ref finale: {FINALE_CODE_REFERENCE[campaignId]} (B wires validate)
+      {campaign ? (
+        <p className="mt-3 text-[10px]" style={{ color: "var(--dim)" }}>
+          Finale code: {finalCode(campaign.scenes)}
         </p>
       ) : null}
     </div>

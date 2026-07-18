@@ -1,72 +1,103 @@
 "use client";
 
-import type { ReactNode } from "react";
-import type { ViewDirection } from "@/lib/types";
+import type { PuzzleDefinition, SceneDefinition, ViewDirection } from "@/lib/types";
+import { VIEW_ORDER, puzzleForView } from "@/lib/campaigns";
 
-const OFFSET: Record<ViewDirection, number> = {
-  left: 0,
-  center: -100,
-  right: -200,
-};
-
-function panelStyle(background: string): React.CSSProperties {
-  if (background.startsWith("gradient:")) {
-    const accent = background.slice("gradient:".length);
-    return {
-      backgroundImage: `linear-gradient(145deg, ${accent} 0%, #0a0a0a 55%, #111827 100%)`,
-    };
-  }
-  return {
-    backgroundImage: `url(${background})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-  };
-}
-
-type PanoramaViewProps = {
-  view: ViewDirection;
-  backgrounds: { left: string; center: string; right: string };
-  children?: ReactNode;
-  transitionMs?: number;
+// One wide 16:9 image per scene, cropped by object-position (plan.md §10).
+const CROP: Record<ViewDirection, string> = {
+  left: "0% 50%",
+  center: "50% 50%",
+  right: "100% 50%",
 };
 
 /**
- * Three coordinated L/C/R panels with a ~300ms slide (plan.md §3 / Person A).
- * Hotspots and overlays are projected as children positioned per-view.
+ * Three coordinated views on a sliding track. Q1 lives on the left wall,
+ * Q2 on the center, Q3 on the right — so rotating IS the progression.
  */
 export function PanoramaView({
+  scene,
   view,
-  backgrounds,
-  children,
-  transitionMs = 300,
-}: PanoramaViewProps) {
+  completedPuzzleIds,
+  onOpenPuzzle,
+}: {
+  scene: SceneDefinition;
+  view: ViewDirection;
+  completedPuzzleIds: string[];
+  onOpenPuzzle: (puzzle: PuzzleDefinition) => void;
+}) {
+  const index = VIEW_ORDER.indexOf(view);
+
   return (
-    <div className="relative h-full w-full overflow-hidden bg-black">
+    <div className="relative flex-1 overflow-hidden" style={{ background: "var(--panel)" }}>
       <div
-        className="absolute inset-0 flex h-full"
-        style={{
-          width: "300%",
-          transform: `translateX(${OFFSET[view]}%)`,
-          transition: `transform ${transitionMs}ms ease-out`,
-        }}
+        className="flex h-full w-[300%] transition-transform duration-300 ease-out"
+        style={{ transform: `translateX(-${index * (100 / 3)}%)` }}
       >
-        {(["left", "center", "right"] as const).map((dir) => (
-          <div
-            key={dir}
-            className="relative h-full w-1/3 shrink-0 bg-zinc-900 bg-cover bg-center"
-            style={panelStyle(backgrounds[dir])}
-            data-view={dir}
-          >
-            {/* Subtle vignette so placeholder gradients still feel like a room */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25" />
-            <div className="pointer-events-none absolute bottom-4 left-4 font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
-              {dir}
+        {VIEW_ORDER.map((v) => {
+          const puzzle = puzzleForView(scene, v);
+          const hotspot = scene.hotspots.find((h) => h.view === v);
+          const solved = puzzle ? completedPuzzleIds.includes(puzzle.id) : false;
+
+          return (
+            <div
+              key={v}
+              className="px-scan relative grid w-1/3 shrink-0 place-items-center"
+              style={{
+                // Background image is applied optimistically; until Person D's
+                // art lands the panel simply reads as an empty lit room.
+                backgroundImage: `url(${scene.backgrounds[v]})`,
+                backgroundSize: "cover",
+                backgroundPosition: CROP[v],
+              }}
+              aria-hidden={v !== view}
+            >
+              {puzzle && hotspot && (
+                <button
+                  onClick={() => onOpenPuzzle(puzzle)}
+                  tabIndex={v === view ? 0 : -1}
+                  className="group grid place-items-center gap-2 border-2 px-6 py-5"
+                  style={{
+                    borderColor: solved ? "var(--lit)" : "var(--accent)",
+                    borderStyle: solved ? "solid" : "dashed",
+                    background: "rgba(11,14,20,0.86)",
+                  }}
+                >
+                  <span
+                    className="text-[9px] tracking-[0.22em]"
+                    style={{ color: solved ? "var(--lit)" : "var(--accent)" }}
+                  >
+                    {hotspot.label.toUpperCase()}
+                  </span>
+                  <span className="text-[10px]" style={{ color: "var(--dim)" }}>
+                    {solved ? "✓ RESOLVED" : "INTERACT"}
+                  </span>
+                </button>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-      {/* Interactive layer stays fixed over the current view */}
-      <div className="absolute inset-0">{children}</div>
+
+      {/* Which wall you're facing, and which questions are done. */}
+      <div className="pointer-events-none absolute left-1/2 top-3 flex -translate-x-1/2 gap-1.5">
+        {VIEW_ORDER.map((v) => {
+          const p = puzzleForView(scene, v);
+          const done = p ? completedPuzzleIds.includes(p.id) : false;
+          return (
+            <span
+              key={v}
+              className="h-[3px] w-4"
+              style={{
+                background: done
+                  ? "var(--lit)"
+                  : v === view
+                    ? "var(--accent)"
+                    : "var(--edge)",
+              }}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

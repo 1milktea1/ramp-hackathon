@@ -1,7 +1,7 @@
 "use client";
 
-import type { CampaignId } from "@/lib/types";
 import { getCampaign } from "@/lib/campaigns";
+import type { CampaignId } from "@/lib/types";
 
 type CampaignResultsProps = {
   status: "won" | "lost";
@@ -18,25 +18,36 @@ export function CampaignResults({
   const won = status === "won";
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 p-6 text-center">
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-        {campaign?.city ?? "Citywide"}
-      </p>
-      <h1 className="text-4xl font-semibold tracking-tight">
-        {won ? "System Restored" : "Lockdown Complete"}
-      </h1>
-      <p className="max-w-md text-sm text-zinc-500">
-        {won
-          ? "The deployment reversed. MIRA logs your escape for the results screen later."
-          : "Time expired before the final code was accepted. Restart and try a faster route."}
-      </p>
-      <button
-        type="button"
-        onClick={onRestart}
-        className="rounded bg-amber-400 px-5 py-2.5 text-sm font-medium text-black hover:bg-amber-300"
-      >
-        Back to campaigns
-      </button>
+    <main
+      className="grid flex-1 place-items-center p-6"
+      data-campaign={campaignId ?? undefined}
+    >
+      <div className="w-full max-w-lg text-center">
+        <p
+          className="text-[10px] tracking-[0.4em]"
+          style={{ color: "var(--dim)" }}
+        >
+          {(campaign?.city ?? "CITYWIDE").toUpperCase()}
+        </p>
+        <h1 className="mt-2 text-4xl font-bold tracking-tight">
+          {won ? "SYSTEM RESTORED" : "LOCKDOWN COMPLETE"}
+        </h1>
+        <p
+          className="mx-auto mt-3 max-w-md text-[12px] leading-relaxed"
+          style={{ color: "var(--dim)" }}
+        >
+          {won
+            ? "The deployment reversed. The city network is stable again."
+            : "Time expired before the final code was accepted. Restart and try a faster route."}
+        </p>
+        <button
+          type="button"
+          onClick={onRestart}
+          className="px-btn mt-8 px-5 py-3 text-[11px]"
+        >
+          Back to campaigns
+        </button>
+      </div>
     </main>
   );
 }

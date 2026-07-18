@@ -1,68 +1,83 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import {
-  FINALE_CODE_KEY,
-  FINALE_CODE_REFERENCE,
-} from "@/lib/campaigns";
+import { getCampaign } from "@/lib/campaigns";
 import { emit } from "@/lib/events";
+import { finalCode, finaleValidatorKey } from "@/lib/progress";
 import { useGameStore } from "@/lib/store";
 import type { CampaignId } from "@/lib/types";
 import { normalizeString, validate } from "@/lib/validators";
 
 type FinalePanelProps = {
   campaignId: CampaignId;
-  onSolved: () => void;
+  onClose: () => void;
 };
 
-/**
- * End-of-campaign code entry (plan.md §3).
- * Prefers validate(sf-finale-code | ny-finale-code); falls back to reference
- * codes so the shell can demo before Person B registers runtime compute.
- */
-export function FinalePanel({ campaignId, onSolved }: FinalePanelProps) {
+/** End-of-campaign code entry — validates via computed stage hints (plan.md §3). */
+export function FinalePanel({ campaignId, onClose }: FinalePanelProps) {
   const [value, setValue] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [shake, setShake] = useState(false);
   const setStatus = useGameStore((s) => s.setStatus);
 
-  const key = FINALE_CODE_KEY[campaignId];
-  const reference = FINALE_CODE_REFERENCE[campaignId];
+  const key = finaleValidatorKey(campaignId);
+  const expected = finalCode(getCampaign(campaignId).scenes);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const cleaned = normalizeString(value).replace(/\s+/g, "");
+    if (!cleaned) return;
 
     emit("answer_submit", { validatorKey: key, input: cleaned });
 
-    const registeredOk = validate(key, cleaned) || validate(key, Number(cleaned));
-    const fallbackOk = cleaned === reference;
-
-    if (registeredOk || fallbackOk) {
+    if (validate(key, cleaned) || cleaned === expected) {
       emit("puzzle_complete", { puzzleId: "finale", validatorKey: key });
       setStatus("won");
-      onSolved();
+      onClose();
       return;
     }
 
     emit("wrong_attempt", { puzzleId: "finale" });
     setFeedback("Code rejected.");
+    setShake(true);
+    setValue("");
+    window.setTimeout(() => setShake(false), 300);
   };
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-lg border border-emerald-400/30 bg-zinc-950/95 p-6 shadow-2xl">
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
-          Final lock
-        </p>
-        <h2 className="mt-1 text-xl font-semibold text-white">
-          Enter stage hints
-        </h2>
-        <p className="mt-2 text-sm text-zinc-400">
-          Concatenate the three stage hint digits in order. Camera gate (Person D)
-          will sit in front of this panel later.
+    <div
+      className="absolute inset-0 z-40 grid place-items-center p-6"
+      style={{ background: "rgba(6,8,12,0.86)" }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Final lock"
+    >
+      <div
+        className="px-border w-full max-w-md p-5"
+        style={{
+          background: "var(--ink)",
+          borderColor: shake ? "var(--hot)" : "var(--edge)",
+          transform: shake ? "translateX(4px)" : "none",
+        }}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <span
+            className="text-[9px] tracking-[0.22em]"
+            style={{ color: "var(--lit)" }}
+          >
+            FINAL LOCK
+          </span>
+          <button type="button" onClick={onClose} className="px-btn px-2 py-1 text-[9px]">
+            Esc
+          </button>
+        </div>
+
+        <h2 className="mb-1 text-lg font-bold">Enter stage hints</h2>
+        <p className="mb-4 text-[12px] leading-relaxed" style={{ color: "var(--dim)" }}>
+          Concatenate the three CODE digits from the tray, in stage order.
         </p>
 
-        <form onSubmit={submit} className="mt-4 flex gap-2">
+        <form onSubmit={submit} className="flex gap-2">
           <input
             value={value}
             onChange={(e) => {
@@ -71,18 +86,25 @@ export function FinalePanel({ campaignId, onSolved }: FinalePanelProps) {
             }}
             placeholder="###"
             inputMode="numeric"
-            className="flex-1 rounded border border-white/15 bg-black/40 px-3 py-2 font-mono text-lg tracking-[0.4em] text-white outline-none focus:border-emerald-300/50"
+            autoComplete="off"
+            className="flex-1 border-2 px-3 py-2 text-lg tracking-[0.4em] outline-none"
+            style={{
+              borderColor: "var(--edge)",
+              background: "var(--panel)",
+              color: "var(--accent)",
+            }}
             autoFocus
           />
-          <button
-            type="submit"
-            className="rounded bg-emerald-400 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-300"
-          >
+          <button type="submit" className="px-btn px-4 py-2 text-[10px]">
             Unlock
           </button>
         </form>
 
-        {feedback ? <p className="mt-2 text-xs text-red-300">{feedback}</p> : null}
+        {feedback ? (
+          <p className="mt-2 text-[11px]" style={{ color: "var(--hot)" }}>
+            {feedback}
+          </p>
+        ) : null}
       </div>
     </div>
   );
