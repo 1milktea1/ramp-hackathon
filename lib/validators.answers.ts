@@ -11,6 +11,13 @@ import { registerValidator, toNumber, normalizeString } from "./validators";
 import { SAN_FRANCISCO, NEW_YORK } from "./campaigns";
 import { checkGuess, getSession } from "./market-game";
 import { finalCode } from "./progress";
+import {
+  checkCard,
+  checkQuote,
+  getTickerSession,
+  type Quote,
+} from "./bayesian-ticker";
+import { getArbRushResult } from "./arb-rush";
 
 /** Register a puzzle whose answer is a single number. */
 function numeric(key: string, expected: number): void {
@@ -51,6 +58,31 @@ numeric("ny_weighted_ev", 3);
 registerValidator("ny-finale-market", (input) =>
   checkGuess(getSession(), input)
 );
+
+// NYC Bayesian Ticker: per-round market containment + final exact-card guess.
+registerValidator("ny-ticker-quote", (input) => {
+  const session = getTickerSession();
+  if (!session || typeof input !== "object" || input === null) return false;
+  const { bid, ask, maxWidth } = input as Partial<Quote> & {
+    maxWidth?: number;
+  };
+  if (
+    ![bid, ask, maxWidth].every((n) => typeof n === "number" && Number.isFinite(n))
+  ) {
+    return false;
+  }
+  return checkQuote(session.card, { bid: bid!, ask: ask! }, maxWidth!).ok;
+});
+
+registerValidator("ny-ticker-card", (input) =>
+  checkCard(getTickerSession()?.card ?? null, input)
+);
+
+// NYC Arb Rush finale: win iff player bankroll > rival after 3 epochs.
+registerValidator("ny-arbrush", (input) => {
+  const { result } = getArbRushResult();
+  return result === "WIN" && normalizeString(input).toUpperCase() === "WIN";
+});
 
 // --- Finale codes (derived) ---------------------------------
 word("sf-finale-code", finalCode(SAN_FRANCISCO.scenes)); // → "547"

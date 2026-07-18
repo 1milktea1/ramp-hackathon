@@ -48,7 +48,6 @@ export function SceneShell({
 
   const [openPuzzle, setOpenPuzzle] = useState<PuzzleDefinition | null>(null);
   const [caption, setCaption] = useState<string | null>(null);
-  const [chatOpen, setChatOpen] = useState(false);
   const [inFinale, setInFinale] = useState(false);
   const [sceneElapsed, setSceneElapsed] = useState(0);
   const lastNudgeRef = useRef(0);
@@ -153,7 +152,7 @@ export function SceneShell({
   // Panorama rotation is suspended whenever a puzzle, the chat or the finale
   // owns the keyboard — otherwise typing an answer would also spin the room.
   useEffect(() => {
-    if (openPuzzle || chatOpen || inFinale) return;
+    if (openPuzzle || inFinale) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") rotate(-1);
@@ -161,7 +160,7 @@ export function SceneShell({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openPuzzle, chatOpen, inFinale, rotate]);
+  }, [openPuzzle, inFinale, rotate]);
 
   function handleSolved(puzzleId: string) {
     completePuzzle(puzzleId);
@@ -178,17 +177,6 @@ export function SceneShell({
       const left = scene.requiredPuzzleIds.filter((id) => !nowComplete.includes(id)).length;
       setCaption(`Logged. ${left} more terminal${left === 1 ? "" : "s"} on this floor.`);
     }
-  }
-
-  function requestHint() {
-    emit("hint_request", { via: "button", sceneId: scene.id });
-    const reply = buildResponse({
-      puzzle: activePuzzle,
-      pressure,
-      explicitRequest: true,
-      seed: sceneElapsed,
-    });
-    setCaption(reply.message);
   }
 
   // SF ends in the full-screen lock room. NYC wins inside the market panel.
@@ -242,13 +230,6 @@ export function SceneShell({
 
         <MiraCaption message={caption} onDismiss={() => setCaption(null)} />
 
-        <MiraChat
-          puzzle={activePuzzle}
-          pressure={pressure}
-          open={chatOpen}
-          onOpenChange={setChatOpen}
-        />
-
         {marketOpen && openPuzzle && (
           <MarketMakerFinale onClose={() => setOpenPuzzle(null)} />
         )}
@@ -292,9 +273,11 @@ export function SceneShell({
               Enter the lock ▶
             </button>
           )}
-          <button onClick={requestHint} className="px-btn px-3 py-2 text-[10px]">
-            Request hint
-          </button>
+          <MiraChat
+            key={scene.id}
+            sceneId={scene.id}
+            onHint={(message) => setCaption(message)}
+          />
         </div>
       </footer>
     </div>

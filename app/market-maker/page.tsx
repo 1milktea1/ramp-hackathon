@@ -1,54 +1,60 @@
 "use client";
 
-import { useState } from "react";
-import { MarketMakerFinale } from "@/components/puzzles/MarketMakerFinale";
-import { getSession } from "@/lib/market-game";
+// STANDALONE HANDOFF / DEMO ROUTE for the Market Maker dice finale.
 
-/** Standalone handoff / restyle route for the NYC exchange finale. */
+import { useState } from "react";
+import { MarketMakerPuzzle } from "@/components/puzzles/MarketMakerPuzzle";
+import {
+  QuantDemoPage,
+  QuantDevRevealButton,
+} from "@/components/puzzles/quantUi";
+import { getSession } from "@/lib/market-game";
+import type { PuzzleDefinition } from "@/lib/types";
+
+const FINALE_PUZZLE: PuzzleDefinition = {
+  id: "nyc-finale-market",
+  category: "probability",
+  interaction: "numeric",
+  prompt:
+    "The exchange is locked. Make markets on the sum and product of the sealed roll (two d6, one d10), read my Buy/Sell/Hold, then name all three dice to reopen trading. You get one guess.",
+  validatorKey: "ny-finale-market",
+  expectedDurationSec: 180,
+  hints: {
+    level1: "Buy means my value is above your ask; Sell means it is below your bid.",
+    level2: "Quote a tight market (bid = ask). A HOLD there confirms the exact value.",
+    level3:
+      "Pin the sum first (range 3-22), then the product, then solve for the dice with two dice <= 6.",
+    level4:
+      "Binary-search each quantity: move your midpoint up on Buy, down on Sell, and lock it when a tight quote holds.",
+  },
+};
+
 export default function MarketMakerDemoPage() {
-  const [open, setOpen] = useState(true);
   const [revealed, setRevealed] = useState(false);
   const roll = getSession();
 
   return (
-    <main
-      className="relative flex h-full flex-1 flex-col"
-      data-campaign="new-york-quant"
-      style={{ background: "var(--ink)" }}
+    <QuantDemoPage
+      title="Lower Manhattan Exchange"
+      footer={
+        <>
+          <QuantDevRevealButton
+            revealed={revealed}
+            onToggle={() => setRevealed((v) => !v)}
+            hideLabel="Hide roll (dev)"
+            showLabel="Reveal roll (dev)"
+          />
+          {revealed && (
+            <span className="font-mono text-xs text-zinc-500">
+              {roll
+                ? `d6=${roll.d6a} · d6=${roll.d6b} · d10=${roll.d10}`
+                : "no active session"}
+            </span>
+          )}
+        </>
+      }
     >
-      {!open && (
-        <div className="grid flex-1 place-items-center p-6">
-          <button
-            type="button"
-            className="px-btn px-4 py-3 text-[11px]"
-            onClick={() => setOpen(true)}
-          >
-            Reopen exchange
-          </button>
-        </div>
-      )}
-
-      {open && <MarketMakerFinale onClose={() => setOpen(false)} />}
-
-      <div
-        className="absolute bottom-3 right-3 z-50 flex items-center gap-2 border-2 px-2 py-1"
-        style={{ borderColor: "var(--edge)", background: "var(--ink)" }}
-      >
-        <button
-          type="button"
-          className="px-btn px-2 py-1 text-[9px]"
-          onClick={() => setRevealed((v) => !v)}
-        >
-          {revealed ? "Hide roll" : "Reveal roll (dev)"}
-        </button>
-        {revealed && (
-          <span className="text-[10px]" style={{ color: "var(--dim)" }}>
-            {roll
-              ? `d6=${roll.d6a} · d6=${roll.d6b} · d10=${roll.d10}`
-              : "no session"}
-          </span>
-        )}
-      </div>
-    </main>
+      <MarketMakerPuzzle puzzle={FINALE_PUZZLE} />
+    </QuantDemoPage>
   );
 }
