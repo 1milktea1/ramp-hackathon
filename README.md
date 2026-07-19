@@ -1,6 +1,6 @@
 # Exit Code: Citywide
 
-*A browser-based escape room that turns real SWE/quant interview prep into a 12-minute cinematic puzzle game, watched over by an AI Game Master.*
+*A browser-based escape room that turns real SWE/quant interview prep into a 12-minute cinematic puzzle game, watched over by an AI Game Master. Built for Ramp's 4-hour Builders Cup Hackathon*
 
 https://ramp-hackathon-theta.vercel.app/
 
